@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use App\Entity\Document;
+use App\Entity\Contract;
 use App\Entity\Department;
 use App\Entity\Employee;
+use App\Entity\LeaveRequest;
 use App\Entity\Profile;
 use App\Entity\Skill;
 use App\Entity\User;
@@ -21,5 +23,7 @@ return static function (): iterable {
     yield Ressource::new("skill", Skill::class, "SK", true);
     yield Ressource::new("document", Document::class, "DC", true);
     yield Ressource::new("department", Department::class, "DP", true);
+    yield Ressource::new("contract", Contract::class, "CT", true);
+    yield Ressource::new("leave_request", LeaveRequest::class, "LR", true);
 
 };

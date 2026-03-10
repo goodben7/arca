@@ -11,6 +11,10 @@ class EntityType
     public const string SKILL = 'SKILL'; // Compétence
     public const string WORK_EXPERIENCE = 'WORK_EXPERIENCE'; // Expérience professionnelle
     public const string DOCUMENT = 'DOCUMENT'; // Document
+    public const string DEPARTMENT = 'DEPARTMENT'; // Département
+    public const string CONTRACT = 'CONTRACT'; // Contrat
+
+
 
     public static function getAll(): array
     {
@@ -28,6 +32,8 @@ class EntityType
                 self::SKILL,
                 self::WORK_EXPERIENCE,
                 self::DOCUMENT,
+                self::DEPARTMENT,
+                self::CONTRACT,
             ]
         ];
     }

@@ -48,4 +48,14 @@ return static function (): iterable {
     yield Permission::new('ROLE_DEPARTMENT_DETAILS', "Consulter les détails d'un département");
     yield Permission::new('ROLE_DEPARTMENT_UPDATE', "Modifier un département");
 
+    yield Permission::new('ROLE_CONTRACT_CREATE', "Créer un contrat");
+    yield Permission::new('ROLE_CONTRACT_LIST', "Consulter la liste des contrats");
+    yield Permission::new('ROLE_CONTRACT_DETAILS', "Consulter les détails d'un contrat");
+    yield Permission::new('ROLE_CONTRACT_UPDATE', "Modifier un contrat");
+
+    yield Permission::new('ROLE_LEAVE_REQUEST_CREATE', "Créer une demande de congé");
+    yield Permission::new('ROLE_LEAVE_REQUEST_LIST', "Consulter la liste des demandes de congé");
+    yield Permission::new('ROLE_LEAVE_REQUEST_DETAILS', "Consulter les détails d'une demande de congé");
+    yield Permission::new('ROLE_LEAVE_REQUEST_UPDATE', "Modifier une demande de congé");
+
 };
