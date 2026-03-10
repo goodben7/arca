@@ -28,4 +28,14 @@ return static function (): iterable {
     yield Permission::new('ROLE_EMPLOYEE_DETAILS', "Consulter les détails d'un employé");
     yield Permission::new('ROLE_EMPLOYEE_UPDATE', "Editer les informations d'un employé");
 
+    yield Permission::new('ROLE_WORK_EXPERIENCE_CREATE', "Créer une expérience professionnelle");
+    yield Permission::new('ROLE_WORK_EXPERIENCE_LIST', "Consulter la liste des expériences professionnelles");
+    yield Permission::new('ROLE_WORK_EXPERIENCE_DETAILS', "Consulter les détails d'une expérience professionnelle");
+    yield Permission::new('ROLE_WORK_EXPERIENCE_UPDATE', "Modifier une expérience professionnelle");
+
+    yield Permission::new('ROLE_SKILL_CREATE', "Créer une compétence");
+    yield Permission::new('ROLE_SKILL_LIST', "Consulter la liste des compétences");
+    yield Permission::new('ROLE_SKILL_DETAILS', "Consulter les détails d'une compétence");
+    yield Permission::new('ROLE_SKILL_UPDATE', "Modifier une compétence");
+
 };

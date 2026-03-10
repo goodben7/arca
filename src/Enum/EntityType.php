@@ -7,6 +7,9 @@ class EntityType
     // === ENTITÉS PRINCIPALES ===
     public const string USER = 'USER'; // Utilisateur du système
     public const string PROFILE = 'PROFILE'; // Profil utilisateur
+    public const string EMPLOYEE = 'EMPLOYEE'; // Employé
+    public const string SKILL = 'SKILL'; // Compétence
+    public const string WORK_EXPERIENCE = 'WORK_EXPERIENCE'; // Expérience professionnelle
 
     public static function getAll(): array
     {
@@ -20,6 +23,9 @@ class EntityType
             'entities' => [
                 self::USER,
                 self::PROFILE,
+                self::EMPLOYEE,
+                self::SKILL,
+                self::WORK_EXPERIENCE,
             ]
         ];
     }
