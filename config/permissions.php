@@ -38,4 +38,14 @@ return static function (): iterable {
     yield Permission::new('ROLE_SKILL_DETAILS', "Consulter les détails d'une compétence");
     yield Permission::new('ROLE_SKILL_UPDATE', "Modifier une compétence");
 
+    yield Permission::new('ROLE_DOC_CREATE', "Créer un document");
+    yield Permission::new('ROLE_DOC_LIST', "Consulter la liste des documents");
+    yield Permission::new('ROLE_DOC_DETAILS', "Consulter les détails d'un document");
+    yield Permission::new('ROLE_DOC_DELETE', "Supprimer un document");
+
+    yield Permission::new('ROLE_DEPARTMENT_CREATE', "Créer un département");
+    yield Permission::new('ROLE_DEPARTMENT_LIST', "Consulter la liste des départements");
+    yield Permission::new('ROLE_DEPARTMENT_DETAILS', "Consulter les détails d'un département");
+    yield Permission::new('ROLE_DEPARTMENT_UPDATE', "Modifier un département");
+
 };
