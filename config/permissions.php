@@ -60,4 +60,9 @@ return static function (): iterable {
     yield Permission::new('ROLE_LEAVE_REQUEST_APPROVE', "Approuver une demande de congé");
     yield Permission::new('ROLE_LEAVE_REQUEST_REJECT', "Rejeter une demande de congé");
 
+    yield Permission::new('ROLE_POSITION_CREATE', "Créer un poste");
+    yield Permission::new('ROLE_POSITION_LIST', "Consulter la liste des postes");
+    yield Permission::new('ROLE_POSITION_DETAILS', "Consulter les détails d'un poste");
+    yield Permission::new('ROLE_POSITION_UPDATE', "Modifier un poste");
+
 };

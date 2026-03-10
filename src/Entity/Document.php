@@ -54,7 +54,6 @@ use ApiPlatform\Doctrine\Common\State\PersistProcessor;
     'id' => 'exact',
     'holderId' => 'exact',
     'holderType' => 'exact',
-    'ownerId' => 'exact',
     'type' => 'exact',
     'title' => 'ipartial',
     'documentRefNumber' => 'start',
