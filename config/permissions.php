@@ -57,5 +57,7 @@ return static function (): iterable {
     yield Permission::new('ROLE_LEAVE_REQUEST_LIST', "Consulter la liste des demandes de congé");
     yield Permission::new('ROLE_LEAVE_REQUEST_DETAILS', "Consulter les détails d'une demande de congé");
     yield Permission::new('ROLE_LEAVE_REQUEST_UPDATE', "Modifier une demande de congé");
+    yield Permission::new('ROLE_LEAVE_REQUEST_APPROVE', "Approuver une demande de congé");
+    yield Permission::new('ROLE_LEAVE_REQUEST_REJECT', "Rejeter une demande de congé");
 
 };

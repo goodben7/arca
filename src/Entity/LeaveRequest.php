@@ -15,9 +15,13 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use App\Doctrine\IdGenerator;
+use App\Dto\ApproveLeaveRequestDto;
+use App\Dto\RejectLeaveRequestDto;
 use App\Model\LeaveRequestConstants;
 use App\Model\RessourceInterface;
 use App\Repository\LeaveRequestRepository;
+use App\State\ApproveLeaveRequestProcessor;
+use App\State\RejectLeaveRequestProcessor;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -46,6 +50,20 @@ use Symfony\Component\Validator\Constraints as Assert;
             security: 'is_granted("ROLE_LEAVE_REQUEST_UPDATE")',
             denormalizationContext: ['groups' => 'leave_request:patch'],
             processor: PersistProcessor::class,
+        ),
+        new Post(
+            uriTemplate: '/leave_requests/approvals',
+            security: 'is_granted("ROLE_LEAVE_REQUEST_APPROVE")',
+            input: ApproveLeaveRequestDto::class,
+            processor: ApproveLeaveRequestProcessor::class,
+            status: 200
+        ),
+        new Post(
+            uriTemplate: '/leave_requests/rejections',
+            security: 'is_granted("ROLE_LEAVE_REQUEST_REJECT")',
+            input: RejectLeaveRequestDto::class,
+            processor: RejectLeaveRequestProcessor::class,
+            status: 200
         ),
     ]
 )]
