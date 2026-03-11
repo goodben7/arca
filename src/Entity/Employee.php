@@ -145,6 +145,14 @@ class Employee implements RessourceInterface
     #[Groups(['employee:get'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    #[ORM\Column(name: 'EM_USER_ID', length: 16, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?string $userId = null;
+
+    #[ORM\Column(length: 120, nullable: true, name: 'EM_DISPLAY_NAME')]
+    #[Groups(['employee:get'])]
+    private ?string $displayName = null;
+
     public function getId(): ?string { return $this->id; }
     public function getEmployeeNumber(): ?string { return $this->employeeNumber; }
     public function setEmployeeNumber(string $employeeNumber): static { $this->employeeNumber = $employeeNumber; return $this; }
@@ -183,9 +191,55 @@ class Employee implements RessourceInterface
     public function getUpdatedAt(): ?\DateTimeImmutable { return $this->updatedAt; }
     public function setUpdatedAt(?\DateTimeImmutable $updatedAt): static { $this->updatedAt = $updatedAt; return $this; }
 
+    public function buildDisplayName(): static
+    {
+        $this->displayName = "{$this->firstName} {$this->lastName}";
+        return $this;
+    }
+
     #[ORM\PreUpdate]
     public function touch(): void { $this->updatedAt = new \DateTimeImmutable(); }
 
     #[ORM\PrePersist]
     public function initCreatedAt(): void { $this->createdAt = new \DateTimeImmutable(); }
+
+    /**
+     * Get the value of userId
+     */ 
+    public function getUserId(): string|null
+    {
+        return $this->userId;
+    }
+
+    /**
+     * Set the value of userId
+     *
+     * @return  self
+     */ 
+    public function setUserId(?string $userId): static
+    {
+        $this->userId = $userId;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of displayName
+     */ 
+    public function getDisplayName(): string|null
+    {
+        return $this->buildDisplayName()->displayName;
+    }
+
+    /**
+     * Set the value of displayName
+     *
+     * @return  self
+     */ 
+    public function setDisplayName(?string $displayName): static
+    {
+        $this->displayName = $displayName;
+
+        return $this;
+    }
 }

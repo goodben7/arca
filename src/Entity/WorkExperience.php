@@ -3,8 +3,12 @@
 namespace App\Entity;
 
 use ApiPlatform\Doctrine\Common\State\PersistProcessor;
+use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Doctrine\Orm\State\CollectionProvider;
 use ApiPlatform\Doctrine\Orm\State\ItemProvider;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
@@ -44,6 +48,15 @@ use Symfony\Component\Serializer\Attribute\Groups;
         ),
     ]
 )]
+#[ApiFilter(SearchFilter::class, properties: [
+    'id' => 'exact',
+    'employee' => 'exact',
+    'company' => 'ipartial',
+    'position' => 'ipartial',
+    'isInternal' => 'exact',
+])]
+#[ApiFilter(OrderFilter::class, properties: ['startDate', 'endDate'])]
+#[ApiFilter(DateFilter::class, properties: ['startDate', 'endDate'])]
 class WorkExperience implements RessourceInterface
 {
     public const string ID_PREFIX = 'WE';

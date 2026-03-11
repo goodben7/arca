@@ -2,6 +2,7 @@
 
 namespace App\Model;
 
+use App\Entity\Profile;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class NewEmployeeModel
@@ -40,6 +41,8 @@ class NewEmployeeModel
         public ?string $employeeNumber = null,
 
         public ?string $manager = null,
+
+        public ?Profile $profile = null,
     ) {
     }
 }

@@ -2,8 +2,9 @@
 
 namespace App\Dto;
 
-use Symfony\Component\Validator\Constraints as Assert;
+use App\Entity\Profile;
 use App\Model\EmployeeConstants;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class CreateEmployeeDto
 {
@@ -40,4 +41,6 @@ class CreateEmployeeDto
     public ?string $employeeNumber = null;
 
     public ?string $managerId = null;
+
+    public ?Profile $profile = null;
 }

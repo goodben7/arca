@@ -4,11 +4,17 @@ namespace App\Manager;
 
 use App\Entity\Employee;
 use App\Entity\User;
+use App\Enum\EntityType;
 use App\Event\ActivityEvent;
+use App\Exception\UnavailableDataException;
+use App\Message\Command\CommandBusInterface;
+use App\Message\Command\CreateUserCommand;
 use App\Message\Query\GetUserDetails;
 use App\Message\Query\QueryBusInterface;
 use App\Model\EmployeeConstants;
 use App\Model\NewEmployeeModel;
+use App\Model\UserProxyIntertace;
+use App\Repository\ProfileRepository;
 use App\Service\ActivityEventDispatcher;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -19,7 +25,9 @@ class EmployeeManager
         private EntityManagerInterface $em,
         private ActivityEventDispatcher $eventDispatcher,
         private Security $security,
+        private ProfileRepository $profileRepository,
         private QueryBusInterface $queries,
+        private CommandBusInterface $bus,
     ) {
     }
 
@@ -72,6 +80,29 @@ class EmployeeManager
 
 
         $this->em->persist($employee);
+
+        $profile = $model->profile ?: $this->profileRepository->findOneBy(['personType' => UserProxyIntertace::PERSON_EMPLOYEE]);
+
+        if (null === $profile) {
+            throw new UnavailableDataException('cannot find profile with person type: employee');
+        }
+        
+        $user = $this->bus->dispatch(
+            new CreateUserCommand(
+            $employee->getEmail(),
+            $employee->getEmail(),
+            $profile,
+            $employee->getPhone(),
+            $employee->getDisplayName(),
+            $employee->getId(),
+            EntityType::EMPLOYEE
+            )
+        );
+
+        $employee->setUserId($user->getId());  
+
+        $this->em->persist($employee);
+
         $this->em->flush();
 
         $this->eventDispatcher->dispatch($employee, ActivityEvent::ACTION_CREATE);

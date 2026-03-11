@@ -36,6 +36,7 @@ class CreateEmployeeProcessor implements ProcessorInterface
             $data->position,
             $data->employeeNumber,
             $data->managerId,
+            $data->profile,
         );
 
         $employee = $this->manager->createFrom($model);
