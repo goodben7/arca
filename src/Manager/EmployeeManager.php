@@ -50,8 +50,11 @@ class EmployeeManager
     {
         $userId = $this->security->getUser()?->getUserIdentifier();
 
-            /** @var User $user */ 
+        /** @var User|null $user */
+        $user = null;
+        if ($userId) {
             $user = $this->queries->ask(new GetUserDetails($userId));
+        }
 
         $employee = new Employee();
 
