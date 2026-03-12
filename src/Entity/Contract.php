@@ -75,6 +75,7 @@ class Contract implements RessourceInterface
 
     #[ORM\Column(name: 'CT_TYPE', length: 40)]
     #[Groups(['contract:get', 'contract:post', 'contract:patch'])]
+    #[Assert\Choice(callback: [ContractConstants::class, 'getTypes'])]
     #[Assert\NotBlank]
     private ?string $type = null;
 
