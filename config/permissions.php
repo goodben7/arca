@@ -27,6 +27,14 @@ return static function (): iterable {
     yield Permission::new('ROLE_EMPLOYEE_LIST', "Consulter la liste des employés");
     yield Permission::new('ROLE_EMPLOYEE_DETAILS', "Consulter les détails d'un employé");
     yield Permission::new('ROLE_EMPLOYEE_UPDATE', "Editer les informations d'un employé");
+    yield Permission::new('ROLE_EMPLOYEE_ACTIVATE', "Activer un employé");
+    yield Permission::new('ROLE_EMPLOYEE_DEACTIVATE', "Désactiver un employé");
+    yield Permission::new('ROLE_EMPLOYEE_SET_ON_LEAVE', "Mettre un employé en congé");
+    yield Permission::new('ROLE_EMPLOYEE_SUSPEND', "Suspendre un employé");
+    yield Permission::new('ROLE_EMPLOYEE_TERMINATE', "Mettre fin au contrat d'un employé");
+    yield Permission::new('ROLE_EMPLOYEE_RETIRE', "Mettre un employé à la retraite");
+    yield Permission::new('ROLE_EMPLOYEE_SET_PROBATION', "Mettre un employé en période d'essai");
+    yield Permission::new('ROLE_EMPLOYEE_ASSIGN_MANAGER', "Assigner un manager à un employé");
 
     yield Permission::new('ROLE_WORK_EXPERIENCE_CREATE', "Créer une expérience professionnelle");
     yield Permission::new('ROLE_WORK_EXPERIENCE_LIST', "Consulter la liste des expériences professionnelles");
@@ -52,6 +60,10 @@ return static function (): iterable {
     yield Permission::new('ROLE_CONTRACT_LIST', "Consulter la liste des contrats");
     yield Permission::new('ROLE_CONTRACT_DETAILS', "Consulter les détails d'un contrat");
     yield Permission::new('ROLE_CONTRACT_UPDATE', "Modifier un contrat");
+    yield Permission::new('ROLE_CONTRACT_ACTIVATE', "Activer un contrat");
+    yield Permission::new('ROLE_CONTRACT_END', "Clôturer un contrat");
+    yield Permission::new('ROLE_CONTRACT_CANCEL', "Annuler un contrat");
+    yield Permission::new('ROLE_CONTRACT_SET_PENDING', "Remettre un contrat en attente");
 
     yield Permission::new('ROLE_LEAVE_REQUEST_CREATE', "Créer une demande de congé");
     yield Permission::new('ROLE_LEAVE_REQUEST_LIST', "Consulter la liste des demandes de congé");
@@ -64,5 +76,7 @@ return static function (): iterable {
     yield Permission::new('ROLE_POSITION_LIST', "Consulter la liste des postes");
     yield Permission::new('ROLE_POSITION_DETAILS', "Consulter les détails d'un poste");
     yield Permission::new('ROLE_POSITION_UPDATE', "Modifier un poste");
+    yield Permission::new('ROLE_POSITION_OPEN', "Ouvrir un poste");
+    yield Permission::new('ROLE_POSITION_CLOSE', "Fermer un poste");
 
 };

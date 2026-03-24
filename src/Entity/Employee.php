@@ -12,11 +12,27 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use App\Doctrine\IdGenerator;
+use App\Dto\ActivateEmployeeDto;
+use App\Dto\AssignManagerEmployeeDto;
+use App\Dto\DeactivateEmployeeDto;
+use App\Dto\PutEmployeeOnLeaveDto;
+use App\Dto\PutEmployeeOnProbationDto;
+use App\Dto\RetireEmployeeDto;
+use App\Dto\SuspendEmployeeDto;
+use App\Dto\TerminateEmployeeDto;
 use App\Dto\CreateEmployeeDto;
 use App\Model\EmployeeConstants;
 use App\Model\RessourceInterface;
 use App\Repository\EmployeeRepository;
+use App\State\ActivateEmployeeProcessor;
+use App\State\AssignManagerEmployeeProcessor;
+use App\State\DeactivateEmployeeProcessor;
 use App\State\CreateEmployeeProcessor;
+use App\State\PutEmployeeOnLeaveProcessor;
+use App\State\PutEmployeeOnProbationProcessor;
+use App\State\RetireEmployeeProcessor;
+use App\State\SuspendEmployeeProcessor;
+use App\State\TerminateEmployeeProcessor;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -45,6 +61,62 @@ use Symfony\Component\Validator\Constraints as Assert;
             security: 'is_granted("ROLE_EMPLOYEE_UPDATE")',
             denormalizationContext: ['groups' => 'employee:patch',],
             processor: PersistProcessor::class,
+        ),
+        new Post(
+            uriTemplate: '/employees/activations',
+            security: 'is_granted("ROLE_EMPLOYEE_ACTIVATE")',
+            input: ActivateEmployeeDto::class,
+            processor: ActivateEmployeeProcessor::class,    
+            status: 200
+        ),
+        new Post(
+            uriTemplate: '/employees/deactivations',
+            security: 'is_granted("ROLE_EMPLOYEE_DEACTIVATE")',
+            input: DeactivateEmployeeDto::class,
+            processor: DeactivateEmployeeProcessor::class,
+            status: 200
+        ),
+        new Post(
+            uriTemplate: '/employees/on_leaves',
+            security: 'is_granted("ROLE_EMPLOYEE_SET_ON_LEAVE")',
+            input: PutEmployeeOnLeaveDto::class,
+            processor: PutEmployeeOnLeaveProcessor::class,
+            status: 200
+        ),
+        new Post(
+            uriTemplate: '/employees/suspensions',
+            security: 'is_granted("ROLE_EMPLOYEE_SUSPEND")',
+            input: SuspendEmployeeDto::class,
+            processor: SuspendEmployeeProcessor::class,
+            status: 200
+        ),
+        new Post(
+            uriTemplate: '/employees/terminations',
+            security: 'is_granted("ROLE_EMPLOYEE_TERMINATE")',
+            input: TerminateEmployeeDto::class,
+            processor: TerminateEmployeeProcessor::class,
+            status: 200
+        ),
+        new Post(
+            uriTemplate: '/employees/retirements',
+            security: 'is_granted("ROLE_EMPLOYEE_RETIRE")',
+            input: RetireEmployeeDto::class,
+            processor: RetireEmployeeProcessor::class,
+            status: 200
+        ),
+        new Post(
+            uriTemplate: '/employees/probations',
+            security: 'is_granted("ROLE_EMPLOYEE_SET_PROBATION")',
+            input: PutEmployeeOnProbationDto::class,
+            processor: PutEmployeeOnProbationProcessor::class,
+            status: 200
+        ),
+        new Post(
+            uriTemplate: '/employees/assign-manager',
+            security: 'is_granted("ROLE_EMPLOYEE_ASSIGN_MANAGER")',
+            input: AssignManagerEmployeeDto::class,
+            processor: AssignManagerEmployeeProcessor::class,
+            status: 200
         ),
     ]
 )]
@@ -121,6 +193,70 @@ class Employee implements RessourceInterface
     #[Groups(['employee:get', 'employee:patch'])]
     private ?string $status = null;
 
+    #[ORM\Column(name: 'EM_ACTIVATED_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?\DateTimeImmutable $activatedAt = null;
+
+    #[ORM\Column(name: 'EM_ACTIVATED_BY', length: 16, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?string $activatedBy = null;
+
+    #[ORM\Column(name: 'EM_DEACTIVATED_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?\DateTimeImmutable $deactivatedAt = null;
+
+    #[ORM\Column(name: 'EM_DEACTIVATED_BY', length: 16, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?string $deactivatedBy = null;
+
+    #[ORM\Column(name: 'EM_ON_LEAVE_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?\DateTimeImmutable $onLeaveAt = null;
+
+    #[ORM\Column(name: 'EM_ON_LEAVE_BY', length: 16, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?string $onLeaveBy = null;
+
+    #[ORM\Column(name: 'EM_SUSPENDED_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?\DateTimeImmutable $suspendedAt = null;
+
+    #[ORM\Column(name: 'EM_SUSPENDED_BY', length: 16, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?string $suspendedBy = null;
+
+    #[ORM\Column(name: 'EM_TERMINATED_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?\DateTimeImmutable $terminatedAt = null;
+
+    #[ORM\Column(name: 'EM_TERMINATED_BY', length: 16, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?string $terminatedBy = null;
+
+    #[ORM\Column(name: 'EM_RETIRED_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?\DateTimeImmutable $retiredAt = null;
+
+    #[ORM\Column(name: 'EM_RETIRED_BY', length: 16, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?string $retiredBy = null;
+
+    #[ORM\Column(name: 'EM_PROBATION_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?\DateTimeImmutable $probationAt = null;
+
+    #[ORM\Column(name: 'EM_PROBATION_BY', length: 16, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?string $probationBy = null;
+
+    #[ORM\Column(name: 'EM_MANAGER_ASSIGNED_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?\DateTimeImmutable $managerAssignedAt = null;
+
+    #[ORM\Column(name: 'EM_MANAGER_ASSIGNED_BY', length: 16, nullable: true)]
+    #[Groups(['employee:get'])]
+    private ?string $managerAssignedBy = null;
+
     #[ORM\Column(name: 'EM_DEPARTMENT', length: 120, nullable: true)]
     #[Groups(['employee:get', 'employee:patch'])]
     private ?string $department = null;
@@ -178,6 +314,38 @@ class Employee implements RessourceInterface
     public function setDepartureDate(?\DateTimeInterface $departureDate): static { $this->departureDate = $departureDate; return $this; }
     public function getStatus(): ?string { return $this->status; }
     public function setStatus(string $status): static { $this->status = $status; return $this; }
+    public function getActivatedAt(): ?\DateTimeImmutable { return $this->activatedAt; }
+    public function setActivatedAt(?\DateTimeImmutable $activatedAt): static { $this->activatedAt = $activatedAt; return $this; }
+    public function getActivatedBy(): ?string { return $this->activatedBy; }
+    public function setActivatedBy(?string $activatedBy): static { $this->activatedBy = $activatedBy; return $this; }
+    public function getDeactivatedAt(): ?\DateTimeImmutable { return $this->deactivatedAt; }
+    public function setDeactivatedAt(?\DateTimeImmutable $deactivatedAt): static { $this->deactivatedAt = $deactivatedAt; return $this; }
+    public function getDeactivatedBy(): ?string { return $this->deactivatedBy; }
+    public function setDeactivatedBy(?string $deactivatedBy): static { $this->deactivatedBy = $deactivatedBy; return $this; }
+    public function getOnLeaveAt(): ?\DateTimeImmutable { return $this->onLeaveAt; }
+    public function setOnLeaveAt(?\DateTimeImmutable $onLeaveAt): static { $this->onLeaveAt = $onLeaveAt; return $this; }
+    public function getOnLeaveBy(): ?string { return $this->onLeaveBy; }
+    public function setOnLeaveBy(?string $onLeaveBy): static { $this->onLeaveBy = $onLeaveBy; return $this; }
+    public function getSuspendedAt(): ?\DateTimeImmutable { return $this->suspendedAt; }
+    public function setSuspendedAt(?\DateTimeImmutable $suspendedAt): static { $this->suspendedAt = $suspendedAt; return $this; }
+    public function getSuspendedBy(): ?string { return $this->suspendedBy; }
+    public function setSuspendedBy(?string $suspendedBy): static { $this->suspendedBy = $suspendedBy; return $this; }
+    public function getTerminatedAt(): ?\DateTimeImmutable { return $this->terminatedAt; }
+    public function setTerminatedAt(?\DateTimeImmutable $terminatedAt): static { $this->terminatedAt = $terminatedAt; return $this; }
+    public function getTerminatedBy(): ?string { return $this->terminatedBy; }
+    public function setTerminatedBy(?string $terminatedBy): static { $this->terminatedBy = $terminatedBy; return $this; }
+    public function getRetiredAt(): ?\DateTimeImmutable { return $this->retiredAt; }
+    public function setRetiredAt(?\DateTimeImmutable $retiredAt): static { $this->retiredAt = $retiredAt; return $this; }
+    public function getRetiredBy(): ?string { return $this->retiredBy; }
+    public function setRetiredBy(?string $retiredBy): static { $this->retiredBy = $retiredBy; return $this; }
+    public function getProbationAt(): ?\DateTimeImmutable { return $this->probationAt; }
+    public function setProbationAt(?\DateTimeImmutable $probationAt): static { $this->probationAt = $probationAt; return $this; }
+    public function getProbationBy(): ?string { return $this->probationBy; }
+    public function setProbationBy(?string $probationBy): static { $this->probationBy = $probationBy; return $this; }
+    public function getManagerAssignedAt(): ?\DateTimeImmutable { return $this->managerAssignedAt; }
+    public function setManagerAssignedAt(?\DateTimeImmutable $managerAssignedAt): static { $this->managerAssignedAt = $managerAssignedAt; return $this; }
+    public function getManagerAssignedBy(): ?string { return $this->managerAssignedBy; }
+    public function setManagerAssignedBy(?string $managerAssignedBy): static { $this->managerAssignedBy = $managerAssignedBy; return $this; }
     public function getDepartment(): ?string { return $this->department; }
     public function setDepartment(?string $department): static { $this->department = $department; return $this; }
     public function getPosition(): ?string { return $this->position; }

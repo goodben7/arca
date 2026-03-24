@@ -15,10 +15,14 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use App\Doctrine\IdGenerator;
+use App\Dto\ClosePositionDto;
+use App\Dto\OpenPositionDto;
 use App\Model\PositionLevel;
 use App\Model\PositionStatusConstants;
 use App\Model\RessourceInterface;
 use App\Repository\PositionRepository;
+use App\State\ClosePositionProcessor;
+use App\State\OpenPositionProcessor;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -47,6 +51,20 @@ use Symfony\Component\Validator\Constraints as Assert;
             security: 'is_granted("ROLE_POSITION_UPDATE")',
             denormalizationContext: ['groups' => 'position:patch',],
             processor: PersistProcessor::class,
+        ),
+        new Post(
+            uriTemplate: '/positions/open',
+            security: 'is_granted("ROLE_POSITION_OPEN")',
+            input: OpenPositionDto::class,
+            processor: OpenPositionProcessor::class,
+            status: 200
+        ),
+        new Post(
+            uriTemplate: '/positions/close',
+            security: 'is_granted("ROLE_POSITION_CLOSE")',
+            input: ClosePositionDto::class,
+            processor: ClosePositionProcessor::class,
+            status: 200
         ),
     ]
 )]
@@ -107,6 +125,22 @@ class Position implements RessourceInterface
     #[Assert\Choice(callback: [PositionStatusConstants::class, 'getStatuses'])]
     #[Assert\NotBlank]
     private ?string $status = null;
+
+    #[ORM\Column(name: 'PO_OPENED_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['position:get'])]
+    private ?\DateTimeImmutable $openedAt = null;
+
+    #[ORM\Column(name: 'PO_OPENED_BY', length: 16, nullable: true)]
+    #[Groups(['position:get'])]
+    private ?string $openedBy = null;
+
+    #[ORM\Column(name: 'PO_CLOSED_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['position:get'])]
+    private ?\DateTimeImmutable $closedAt = null;
+
+    #[ORM\Column(name: 'PO_CLOSED_BY', length: 16, nullable: true)]
+    #[Groups(['position:get'])]
+    private ?string $closedBy = null;
 
     #[ORM\Column(name: 'PO_CREATED_AT')]
     #[Groups(['position:get'])]
@@ -204,6 +238,14 @@ class Position implements RessourceInterface
 
         return $this;
     }
+    public function getOpenedAt(): ?\DateTimeImmutable { return $this->openedAt; }
+    public function setOpenedAt(?\DateTimeImmutable $openedAt): static { $this->openedAt = $openedAt; return $this; }
+    public function getOpenedBy(): ?string { return $this->openedBy; }
+    public function setOpenedBy(?string $openedBy): static { $this->openedBy = $openedBy; return $this; }
+    public function getClosedAt(): ?\DateTimeImmutable { return $this->closedAt; }
+    public function setClosedAt(?\DateTimeImmutable $closedAt): static { $this->closedAt = $closedAt; return $this; }
+    public function getClosedBy(): ?string { return $this->closedBy; }
+    public function setClosedBy(?string $closedBy): static { $this->closedBy = $closedBy; return $this; }
 
     public function getCreatedAt(): ?\DateTimeImmutable
     {

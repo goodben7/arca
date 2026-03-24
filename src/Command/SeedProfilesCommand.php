@@ -54,6 +54,14 @@ class SeedProfilesCommand extends Command
             'ROLE_EMPLOYEE_LIST',
             'ROLE_EMPLOYEE_DETAILS',
             'ROLE_EMPLOYEE_UPDATE',
+            'ROLE_EMPLOYEE_ACTIVATE',
+            'ROLE_EMPLOYEE_DEACTIVATE',
+            'ROLE_EMPLOYEE_SET_ON_LEAVE',
+            'ROLE_EMPLOYEE_SUSPEND',
+            'ROLE_EMPLOYEE_TERMINATE',
+            'ROLE_EMPLOYEE_RETIRE',
+            'ROLE_EMPLOYEE_SET_PROBATION',
+            'ROLE_EMPLOYEE_ASSIGN_MANAGER',
         ];
         $employeeRead = ['ROLE_EMPLOYEE_LIST', 'ROLE_EMPLOYEE_DETAILS'];
         $employeeUpdate = ['ROLE_EMPLOYEE_DETAILS', 'ROLE_EMPLOYEE_UPDATE'];
@@ -95,6 +103,10 @@ class SeedProfilesCommand extends Command
             'ROLE_CONTRACT_LIST',
             'ROLE_CONTRACT_DETAILS',
             'ROLE_CONTRACT_UPDATE',
+            'ROLE_CONTRACT_ACTIVATE',
+            'ROLE_CONTRACT_END',
+            'ROLE_CONTRACT_CANCEL',
+            'ROLE_CONTRACT_SET_PENDING',
         ];
         $contractRead = ['ROLE_CONTRACT_LIST', 'ROLE_CONTRACT_DETAILS'];
 

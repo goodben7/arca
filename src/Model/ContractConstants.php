@@ -14,6 +14,11 @@ class ContractConstants
     public const string STATUS_ENDED = 'ENDED';
     public const string STATUS_CANCELLED = 'CANCELLED';
 
+    public const string ACTION_ACTIVATE = 'ACTIVATE';
+    public const string ACTION_END = 'END';
+    public const string ACTION_CANCEL = 'CANCEL';
+    public const string ACTION_SET_PENDING = 'SET_PENDING';
+
     public const string STATUS_CDI = self::TYPE_CDI;
     public const string STATUS_CDD = self::TYPE_CDD;
     public const string STATUS_INTERNSHIP = self::TYPE_INTERNSHIP;
@@ -37,5 +42,25 @@ class ContractConstants
             self::STATUS_ENDED,
             self::STATUS_CANCELLED,
         ];
+    }
+
+    public static function getActions(): array
+    {
+        return [
+            self::ACTION_ACTIVATE,
+            self::ACTION_END,
+            self::ACTION_CANCEL,
+            self::ACTION_SET_PENDING,
+        ];
+    }
+
+    public static function getAllowedActionsForStatus(?string $status): array
+    {
+        return match ($status) {
+            self::STATUS_PENDING => [self::ACTION_ACTIVATE, self::ACTION_CANCEL],
+            self::STATUS_ACTIVE => [self::ACTION_END, self::ACTION_CANCEL, self::ACTION_SET_PENDING],
+            self::STATUS_ENDED, self::STATUS_CANCELLED => [],
+            default => [],
+        };
     }
 }

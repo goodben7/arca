@@ -15,9 +15,17 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use App\Doctrine\IdGenerator;
+use App\Dto\ActivateContractDto;
+use App\Dto\CancelContractDto;
+use App\Dto\EndContractDto;
+use App\Dto\SetContractPendingDto;
 use App\Model\ContractConstants;
 use App\Model\RessourceInterface;
 use App\Repository\ContractRepository;
+use App\State\ActivateContractProcessor;
+use App\State\CancelContractProcessor;
+use App\State\EndContractProcessor;
+use App\State\SetContractPendingProcessor;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -46,6 +54,34 @@ use Symfony\Component\Validator\Constraints as Assert;
             security: 'is_granted("ROLE_CONTRACT_UPDATE")',
             denormalizationContext: ['groups' => 'contract:patch'],
             processor: PersistProcessor::class,
+        ),
+        new Post(
+            uriTemplate: '/contracts/activations',
+            security: 'is_granted("ROLE_CONTRACT_ACTIVATE")',
+            input: ActivateContractDto::class,
+            processor: ActivateContractProcessor::class,
+            status: 200
+        ),
+        new Post(
+            uriTemplate: '/contracts/endings',
+            security: 'is_granted("ROLE_CONTRACT_END")',
+            input: EndContractDto::class,
+            processor: EndContractProcessor::class,
+            status: 200
+        ),
+        new Post(
+            uriTemplate: '/contracts/cancellations',
+            security: 'is_granted("ROLE_CONTRACT_CANCEL")',
+            input: CancelContractDto::class,
+            processor: CancelContractProcessor::class,
+            status: 200
+        ),
+        new Post(
+            uriTemplate: '/contracts/pendings',
+            security: 'is_granted("ROLE_CONTRACT_SET_PENDING")',
+            input: SetContractPendingDto::class,
+            processor: SetContractPendingProcessor::class,
+            status: 200
         ),
     ]
 )]
@@ -98,6 +134,38 @@ class Contract implements RessourceInterface
     #[Assert\Choice(callback: [ContractConstants::class, 'getStatuses'])]
     #[Assert\NotBlank]
     private ?string $status = null;
+
+    #[ORM\Column(name: 'CT_ACTIVATED_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['contract:get'])]
+    private ?\DateTimeImmutable $activatedAt = null;
+
+    #[ORM\Column(name: 'CT_ACTIVATED_BY', length: 16, nullable: true)]
+    #[Groups(['contract:get'])]
+    private ?string $activatedBy = null;
+
+    #[ORM\Column(name: 'CT_ENDED_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['contract:get'])]
+    private ?\DateTimeImmutable $endedAt = null;
+
+    #[ORM\Column(name: 'CT_ENDED_BY', length: 16, nullable: true)]
+    #[Groups(['contract:get'])]
+    private ?string $endedBy = null;
+
+    #[ORM\Column(name: 'CT_CANCELLED_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['contract:get'])]
+    private ?\DateTimeImmutable $cancelledAt = null;
+
+    #[ORM\Column(name: 'CT_CANCELLED_BY', length: 16, nullable: true)]
+    #[Groups(['contract:get'])]
+    private ?string $cancelledBy = null;
+
+    #[ORM\Column(name: 'CT_PENDING_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['contract:get'])]
+    private ?\DateTimeImmutable $pendingAt = null;
+
+    #[ORM\Column(name: 'CT_PENDING_BY', length: 16, nullable: true)]
+    #[Groups(['contract:get'])]
+    private ?string $pendingBy = null;
 
     #[ORM\Column(name: 'CT_CREATED_AT')]
     #[Groups(['contract:get'])]
@@ -180,6 +248,102 @@ class Contract implements RessourceInterface
     public function setStatus(string $status): static
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getActivatedAt(): ?\DateTimeImmutable
+    {
+        return $this->activatedAt;
+    }
+
+    public function setActivatedAt(?\DateTimeImmutable $activatedAt): static
+    {
+        $this->activatedAt = $activatedAt;
+
+        return $this;
+    }
+
+    public function getActivatedBy(): ?string
+    {
+        return $this->activatedBy;
+    }
+
+    public function setActivatedBy(?string $activatedBy): static
+    {
+        $this->activatedBy = $activatedBy;
+
+        return $this;
+    }
+
+    public function getEndedAt(): ?\DateTimeImmutable
+    {
+        return $this->endedAt;
+    }
+
+    public function setEndedAt(?\DateTimeImmutable $endedAt): static
+    {
+        $this->endedAt = $endedAt;
+
+        return $this;
+    }
+
+    public function getEndedBy(): ?string
+    {
+        return $this->endedBy;
+    }
+
+    public function setEndedBy(?string $endedBy): static
+    {
+        $this->endedBy = $endedBy;
+
+        return $this;
+    }
+
+    public function getCancelledAt(): ?\DateTimeImmutable
+    {
+        return $this->cancelledAt;
+    }
+
+    public function setCancelledAt(?\DateTimeImmutable $cancelledAt): static
+    {
+        $this->cancelledAt = $cancelledAt;
+
+        return $this;
+    }
+
+    public function getCancelledBy(): ?string
+    {
+        return $this->cancelledBy;
+    }
+
+    public function setCancelledBy(?string $cancelledBy): static
+    {
+        $this->cancelledBy = $cancelledBy;
+
+        return $this;
+    }
+
+    public function getPendingAt(): ?\DateTimeImmutable
+    {
+        return $this->pendingAt;
+    }
+
+    public function setPendingAt(?\DateTimeImmutable $pendingAt): static
+    {
+        $this->pendingAt = $pendingAt;
+
+        return $this;
+    }
+
+    public function getPendingBy(): ?string
+    {
+        return $this->pendingBy;
+    }
+
+    public function setPendingBy(?string $pendingBy): static
+    {
+        $this->pendingBy = $pendingBy;
 
         return $this;
     }
