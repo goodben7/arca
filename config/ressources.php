@@ -13,6 +13,8 @@ use App\Entity\Position;
 use App\Entity\Profile;
 use App\Entity\RecruitmentRequest;
 use App\Entity\Skill;
+use App\Entity\TrainingRequest;
+use App\Entity\TrainingSession;
 use App\Entity\User;
 use App\Entity\WorkExperience;
 use App\Model\Ressource;
@@ -33,5 +35,7 @@ return static function (): iterable {
     yield Ressource::new("recruitment_request", RecruitmentRequest::class, "RR", true);
     yield Ressource::new("job_offer", JobOffer::class, "JO", true);
     yield Ressource::new("application", Application::class, "AP", true);
+    yield Ressource::new("training_request", TrainingRequest::class, "TR", true);
+    yield Ressource::new("training_session", TrainingSession::class, "TS", true);
 
 };

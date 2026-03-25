@@ -102,4 +102,18 @@ return static function (): iterable {
     yield Permission::new('ROLE_APPLICATION_REJECT', "Rejeter une candidature");
     yield Permission::new('ROLE_APPLICATION_HIRE', "Embaucher une candidature");
 
+    yield Permission::new('ROLE_TRAINING_REQUEST_CREATE', "Créer une demande de formation");
+    yield Permission::new('ROLE_TRAINING_REQUEST_LIST', "Consulter la liste des demandes de formation");
+    yield Permission::new('ROLE_TRAINING_REQUEST_DETAILS', "Consulter les détails d'une demande de formation");
+    yield Permission::new('ROLE_TRAINING_REQUEST_APPROVE', "Approuver une demande de formation");
+    yield Permission::new('ROLE_TRAINING_REQUEST_REJECT', "Rejeter une demande de formation");
+
+    yield Permission::new('ROLE_TRAINING_SESSION_CREATE', "Créer une session de formation");
+    yield Permission::new('ROLE_TRAINING_SESSION_LIST', "Consulter la liste des sessions de formation");
+    yield Permission::new('ROLE_TRAINING_SESSION_DETAILS', "Consulter les détails d'une session de formation");
+    yield Permission::new('ROLE_TRAINING_SESSION_START', "Démarrer une session de formation");
+    yield Permission::new('ROLE_TRAINING_SESSION_COMPLETE', "Clôturer une session de formation");
+    yield Permission::new('ROLE_TRAINING_SESSION_CANCEL', "Annuler une session de formation");
+    yield Permission::new('ROLE_TRAINING_SESSION_SET_PLANNED', "Remettre une session à l'état planifié");
+
 };
