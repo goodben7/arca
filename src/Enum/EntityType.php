@@ -13,6 +13,9 @@ class EntityType
     public const string DOCUMENT = 'DOCUMENT'; // Document
     public const string DEPARTMENT = 'DEPARTMENT'; // Département
     public const string CONTRACT = 'CONTRACT'; // Contrat
+    public const string POSITION = 'POSITION'; // Poste
+    public const string RECRUITMENT_REQUEST = 'RECRUITMENT_REQUEST'; // Demande de recrutement
+    public const string JOB_OFFER = 'JOB_OFFER'; // Offre d'emploi
 
 
 
@@ -34,6 +37,9 @@ class EntityType
                 self::DOCUMENT,
                 self::DEPARTMENT,
                 self::CONTRACT,
+                self::POSITION,
+                self::RECRUITMENT_REQUEST,
+                self::JOB_OFFER,
             ]
         ];
     }

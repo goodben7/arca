@@ -131,8 +131,29 @@ class SeedProfilesCommand extends Command
             'ROLE_POSITION_LIST',
             'ROLE_POSITION_DETAILS',
             'ROLE_POSITION_UPDATE',
+            'ROLE_POSITION_OPEN',
+            'ROLE_POSITION_CLOSE',
         ];
         $positionRead = ['ROLE_POSITION_LIST', 'ROLE_POSITION_DETAILS'];
+
+        $recruitmentRequestCrud = [
+            'ROLE_RECRUITMENT_REQUEST_CREATE',
+            'ROLE_RECRUITMENT_REQUEST_LIST',
+            'ROLE_RECRUITMENT_REQUEST_DETAILS',
+            'ROLE_RECRUITMENT_REQUEST_APPROVE',
+            'ROLE_RECRUITMENT_REQUEST_REJECT',
+        ];
+        $recruitmentRequestRead = ['ROLE_RECRUITMENT_REQUEST_LIST', 'ROLE_RECRUITMENT_REQUEST_DETAILS'];
+
+        $jobOfferCrud = [
+            'ROLE_JOB_OFFER_CREATE',
+            'ROLE_JOB_OFFER_LIST',
+            'ROLE_JOB_OFFER_DETAILS',
+            'ROLE_JOB_OFFER_PUBLISH',
+            'ROLE_JOB_OFFER_CLOSE',
+            'ROLE_JOB_OFFER_SET_DRAFT',
+        ];
+        $jobOfferRead = ['ROLE_JOB_OFFER_LIST', 'ROLE_JOB_OFFER_DETAILS'];
 
         $specs = [
             [
@@ -160,6 +181,8 @@ class SeedProfilesCommand extends Command
                     $positionCrud,
                     $contractCrud,
                     $leaveRequestCrud,
+                    $recruitmentRequestCrud,
+                    $jobOfferCrud,
                 ))),
             ],
             [
@@ -176,6 +199,8 @@ class SeedProfilesCommand extends Command
                     $positionRead,
                     $contractRead,
                     $leaveRequestRead,
+                    $recruitmentRequestRead,
+                    $jobOfferRead,
                 ))),
             ],
             [

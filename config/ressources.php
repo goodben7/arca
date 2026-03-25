@@ -6,9 +6,11 @@ use App\Entity\Document;
 use App\Entity\Contract;
 use App\Entity\Department;
 use App\Entity\Employee;
+use App\Entity\JobOffer;
 use App\Entity\LeaveRequest;
 use App\Entity\Position;
 use App\Entity\Profile;
+use App\Entity\RecruitmentRequest;
 use App\Entity\Skill;
 use App\Entity\User;
 use App\Entity\WorkExperience;
@@ -27,5 +29,7 @@ return static function (): iterable {
     yield Ressource::new("contract", Contract::class, "CT", true);
     yield Ressource::new("leave_request", LeaveRequest::class, "LR", true);
     yield Ressource::new("position", Position::class, "PO", true);
+    yield Ressource::new("recruitment_request", RecruitmentRequest::class, "RR", true);
+    yield Ressource::new("job_offer", JobOffer::class, "JO", true);
 
 };

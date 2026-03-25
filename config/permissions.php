@@ -79,4 +79,17 @@ return static function (): iterable {
     yield Permission::new('ROLE_POSITION_OPEN', "Ouvrir un poste");
     yield Permission::new('ROLE_POSITION_CLOSE', "Fermer un poste");
 
+    yield Permission::new('ROLE_RECRUITMENT_REQUEST_CREATE', "Créer une demande de recrutement");
+    yield Permission::new('ROLE_RECRUITMENT_REQUEST_LIST', "Consulter la liste des demandes de recrutement");
+    yield Permission::new('ROLE_RECRUITMENT_REQUEST_DETAILS', "Consulter les détails d'une demande de recrutement");
+    yield Permission::new('ROLE_RECRUITMENT_REQUEST_APPROVE', "Approuver une demande de recrutement");
+    yield Permission::new('ROLE_RECRUITMENT_REQUEST_REJECT', "Rejeter une demande de recrutement");
+
+    yield Permission::new('ROLE_JOB_OFFER_CREATE', "Créer une offre d'emploi");
+    yield Permission::new('ROLE_JOB_OFFER_LIST', "Consulter la liste des offres d'emploi");
+    yield Permission::new('ROLE_JOB_OFFER_DETAILS', "Consulter les détails d'une offre d'emploi");
+    yield Permission::new('ROLE_JOB_OFFER_PUBLISH', "Publier une offre d'emploi");
+    yield Permission::new('ROLE_JOB_OFFER_CLOSE', "Fermer une offre d'emploi");
+    yield Permission::new('ROLE_JOB_OFFER_SET_DRAFT', "Remettre une offre d'emploi en brouillon");
+
 };
