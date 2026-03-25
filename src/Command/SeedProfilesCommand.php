@@ -140,6 +140,7 @@ class SeedProfilesCommand extends Command
             'ROLE_RECRUITMENT_REQUEST_CREATE',
             'ROLE_RECRUITMENT_REQUEST_LIST',
             'ROLE_RECRUITMENT_REQUEST_DETAILS',
+            'ROLE_RECRUITMENT_REQUEST_UPDATE',
             'ROLE_RECRUITMENT_REQUEST_APPROVE',
             'ROLE_RECRUITMENT_REQUEST_REJECT',
         ];
@@ -149,6 +150,7 @@ class SeedProfilesCommand extends Command
             'ROLE_JOB_OFFER_CREATE',
             'ROLE_JOB_OFFER_LIST',
             'ROLE_JOB_OFFER_DETAILS',
+            'ROLE_JOB_OFFER_UPDATE',
             'ROLE_JOB_OFFER_PUBLISH',
             'ROLE_JOB_OFFER_CLOSE',
             'ROLE_JOB_OFFER_SET_DRAFT',

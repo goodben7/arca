@@ -9,6 +9,7 @@
 /bruno/
 /public/media/
 /vendor/
+/deploy.sh
 ###< symfony/framework-bundle ###
 
 ###> phpunit/phpunit ###

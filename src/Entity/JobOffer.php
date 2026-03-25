@@ -10,7 +10,9 @@ use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Doctrine\Common\State\PersistProcessor;
 use App\Doctrine\IdGenerator;
 use App\Dto\CloseJobOfferDto;
 use App\Dto\CreateJobOfferDto;
@@ -45,6 +47,11 @@ use Symfony\Component\Validator\Constraints as Assert;
             security: 'is_granted("ROLE_JOB_OFFER_CREATE")',
             input: CreateJobOfferDto::class,
             processor: CreateJobOfferProcessor::class 
+        ),
+        new Patch(
+            security: 'is_granted("ROLE_JOB_OFFER_UPDATE")',
+            denormalizationContext: ['groups' => 'job_offer:patch',],
+            processor: PersistProcessor::class,
         ),
         new Post(
             uriTemplate: '/job_offers/publications',
@@ -88,7 +95,7 @@ class JobOffer implements RessourceInterface
     private ?string $id = null;
 
     #[ORM\Column(name: 'JO_TITLE', length: 120)]
-    #[Groups(['job_offer:get'])]
+    #[Groups(['job_offer:get', 'job_offer:patch'])]
     #[Assert\NotBlank]
     private ?string $title = null;
 

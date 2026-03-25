@@ -10,7 +10,9 @@ use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Doctrine\Common\State\PersistProcessor;
 use App\Doctrine\IdGenerator;
 use App\Dto\ApproveRecruitmentRequestDto;
 use App\Dto\CreateRecruitmentRequestDto;
@@ -44,6 +46,11 @@ use Symfony\Component\Validator\Constraints as Assert;
             security: 'is_granted("ROLE_RECRUITMENT_REQUEST_CREATE")',
             input: CreateRecruitmentRequestDto::class,
             processor: CreateRecruitmentRequestProcessor::class
+        ),
+        new Patch(
+            security: 'is_granted("ROLE_RECRUITMENT_REQUEST_UPDATE")',
+            denormalizationContext: ['groups' => 'recruitment_request:patch',],
+            processor: PersistProcessor::class,
         ),
         new Post(
             uriTemplate: '/recruitment_requests/approvals',
@@ -98,13 +105,13 @@ class RecruitmentRequest implements RessourceInterface
     private ?string $position = null;
 
     #[ORM\Column(name: 'RR_NUMBER_OF_POSITIONS')]
-    #[Groups(['recruitment_request:get'])]
+    #[Groups(['recruitment_request:get', 'recruitment_request:patch'])]
     #[Assert\Positive]
     #[Assert\NotNull]
     private ?int $numberOfPositions = null;
 
     #[ORM\Column(name: 'RR_JUSTIFICATION', type: Types::TEXT)]
-    #[Groups(['recruitment_request:get'])]
+    #[Groups(['recruitment_request:get', 'recruitment_request:patch'])]
     #[Assert\NotBlank]
     private ?string $justification = null;
 

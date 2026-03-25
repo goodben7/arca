@@ -88,6 +88,7 @@ return static function (): iterable {
     yield Permission::new('ROLE_JOB_OFFER_CREATE', "Créer une offre d'emploi");
     yield Permission::new('ROLE_JOB_OFFER_LIST', "Consulter la liste des offres d'emploi");
     yield Permission::new('ROLE_JOB_OFFER_DETAILS', "Consulter les détails d'une offre d'emploi");
+    yield Permission::new('ROLE_JOB_OFFER_UPDATE', "Modifier une offre d'emploi");
     yield Permission::new('ROLE_JOB_OFFER_PUBLISH', "Publier une offre d'emploi");
     yield Permission::new('ROLE_JOB_OFFER_CLOSE', "Fermer une offre d'emploi");
     yield Permission::new('ROLE_JOB_OFFER_SET_DRAFT', "Remettre une offre d'emploi en brouillon");
