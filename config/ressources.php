@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Entity\Document;
 use App\Entity\Contract;
+use App\Entity\Application;
 use App\Entity\Department;
 use App\Entity\Employee;
 use App\Entity\JobOffer;
@@ -31,5 +32,6 @@ return static function (): iterable {
     yield Ressource::new("position", Position::class, "PO", true);
     yield Ressource::new("recruitment_request", RecruitmentRequest::class, "RR", true);
     yield Ressource::new("job_offer", JobOffer::class, "JO", true);
+    yield Ressource::new("application", Application::class, "AP", true);
 
 };

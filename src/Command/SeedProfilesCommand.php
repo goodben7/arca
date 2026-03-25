@@ -157,6 +157,18 @@ class SeedProfilesCommand extends Command
         ];
         $jobOfferRead = ['ROLE_JOB_OFFER_LIST', 'ROLE_JOB_OFFER_DETAILS'];
 
+        $applicationCrud = [
+            'ROLE_APPLICATION_CREATE',
+            'ROLE_APPLICATION_LIST',
+            'ROLE_APPLICATION_DETAILS',
+            'ROLE_APPLICATION_SET_APPLIED',
+            'ROLE_APPLICATION_SHORTLIST',
+            'ROLE_APPLICATION_INTERVIEW',
+            'ROLE_APPLICATION_REJECT',
+            'ROLE_APPLICATION_HIRE',
+        ];
+        $applicationRead = ['ROLE_APPLICATION_LIST', 'ROLE_APPLICATION_DETAILS'];
+
         $specs = [
             [
                 'label' => 'Super Administrateur',
@@ -185,6 +197,7 @@ class SeedProfilesCommand extends Command
                     $leaveRequestCrud,
                     $recruitmentRequestCrud,
                     $jobOfferCrud,
+                    $applicationCrud,
                 ))),
             ],
             [
@@ -203,6 +216,7 @@ class SeedProfilesCommand extends Command
                     $leaveRequestRead,
                     $recruitmentRequestRead,
                     $jobOfferRead,
+                    $applicationRead,
                 ))),
             ],
             [

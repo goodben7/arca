@@ -93,4 +93,13 @@ return static function (): iterable {
     yield Permission::new('ROLE_JOB_OFFER_CLOSE', "Fermer une offre d'emploi");
     yield Permission::new('ROLE_JOB_OFFER_SET_DRAFT', "Remettre une offre d'emploi en brouillon");
 
+    yield Permission::new('ROLE_APPLICATION_CREATE', "Créer une candidature");
+    yield Permission::new('ROLE_APPLICATION_LIST', "Consulter la liste des candidatures");
+    yield Permission::new('ROLE_APPLICATION_DETAILS', "Consulter les détails d'une candidature");
+    yield Permission::new('ROLE_APPLICATION_SET_APPLIED', "Remettre une candidature à l'état APPLIED");
+    yield Permission::new('ROLE_APPLICATION_SHORTLIST', "Shortlister une candidature");
+    yield Permission::new('ROLE_APPLICATION_INTERVIEW', "Mettre une candidature en entretien");
+    yield Permission::new('ROLE_APPLICATION_REJECT', "Rejeter une candidature");
+    yield Permission::new('ROLE_APPLICATION_HIRE', "Embaucher une candidature");
+
 };
