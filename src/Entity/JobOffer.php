@@ -36,11 +36,11 @@ use Symfony\Component\Validator\Constraints as Assert;
     normalizationContext: ['groups' => 'job_offer:get'],
     operations: [
         new Get(
-            security: 'is_granted("ROLE_JOB_OFFER_DETAILS")',
+            //security: 'is_granted("ROLE_JOB_OFFER_DETAILS")',
             provider: ItemProvider::class
         ),
         new GetCollection(
-            security: 'is_granted("ROLE_JOB_OFFER_LIST")',
+            //security: 'is_granted("ROLE_JOB_OFFER_LIST")',
             provider: CollectionProvider::class
         ),
         new Post(

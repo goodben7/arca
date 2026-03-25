@@ -32,16 +32,16 @@ use ApiPlatform\Doctrine\Common\State\PersistProcessor;
     normalizationContext: ['groups' => 'document:get'],
     operations: [
         new Get(
-            security: 'is_granted("ROLE_DOC_DETAILS")',
+            //security: 'is_granted("ROLE_DOC_DETAILS")',
             provider: ItemProvider::class,
         ),
         new GetCollection(
-            security: 'is_granted("ROLE_DOC_LIST")',
+            //security: 'is_granted("ROLE_DOC_LIST")',
             provider: CollectionProvider::class,
         ),
         new Post(
             denormalizationContext: ['groups' => 'document:post'],
-            security: 'is_granted("ROLE_DOC_CREATE")',
+            //security: 'is_granted("ROLE_DOC_CREATE")',
             inputFormats: ['multipart' => ['multipart/form-data']],
             processor: PersistProcessor::class,
         ),

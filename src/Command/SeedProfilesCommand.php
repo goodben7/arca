@@ -182,6 +182,7 @@ class SeedProfilesCommand extends Command
             'ROLE_TRAINING_SESSION_CREATE',
             'ROLE_TRAINING_SESSION_LIST',
             'ROLE_TRAINING_SESSION_DETAILS',
+            'ROLE_TRAINING_SESSION_UPDATE',
             'ROLE_TRAINING_SESSION_START',
             'ROLE_TRAINING_SESSION_COMPLETE',
             'ROLE_TRAINING_SESSION_CANCEL',

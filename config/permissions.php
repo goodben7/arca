@@ -111,6 +111,7 @@ return static function (): iterable {
     yield Permission::new('ROLE_TRAINING_SESSION_CREATE', "Créer une session de formation");
     yield Permission::new('ROLE_TRAINING_SESSION_LIST', "Consulter la liste des sessions de formation");
     yield Permission::new('ROLE_TRAINING_SESSION_DETAILS', "Consulter les détails d'une session de formation");
+    yield Permission::new('ROLE_TRAINING_SESSION_UPDATE', "Modifier une session de formation");
     yield Permission::new('ROLE_TRAINING_SESSION_START', "Démarrer une session de formation");
     yield Permission::new('ROLE_TRAINING_SESSION_COMPLETE', "Clôturer une session de formation");
     yield Permission::new('ROLE_TRAINING_SESSION_CANCEL', "Annuler une session de formation");

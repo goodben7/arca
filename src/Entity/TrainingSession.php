@@ -10,6 +10,7 @@ use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use App\Doctrine\IdGenerator;
 use App\Dto\CancelTrainingSessionDto;
@@ -25,6 +26,7 @@ use App\State\CancelTrainingSessionProcessor;
 use App\State\CompleteTrainingSessionProcessor;
 use App\State\SetTrainingSessionPlannedProcessor;
 use App\State\StartTrainingSessionProcessor;
+use ApiPlatform\Doctrine\Common\State\PersistProcessor;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -47,6 +49,11 @@ use Symfony\Component\Validator\Constraints as Assert;
             security: 'is_granted("ROLE_TRAINING_SESSION_CREATE")',
             input: CreateTrainingSessionDto::class,
             processor: CreateTrainingSessionProcessor::class 
+        ),
+        new Patch(
+            security: 'is_granted("ROLE_TRAINING_SESSION_UPDATE")',
+            denormalizationContext: ['groups' => 'training_session:patch',],
+            processor: PersistProcessor::class,
         ),
         new Post(
             uriTemplate: '/training_sessions/startings',
@@ -98,33 +105,33 @@ class TrainingSession implements RessourceInterface
     private ?string $id = null;
 
     #[ORM\Column(name: 'TS_TITLE', length: 160)]
-    #[Groups(['training_session:get'])]
+    #[Groups(['training_session:get', 'training_session:patch'])]
     #[Assert\NotBlank]
     private ?string $title = null;
 
     #[ORM\Column(name: 'TS_TRAINER', length: 160)]
-    #[Groups(['training_session:get'])]
+    #[Groups(['training_session:get', 'training_session:patch'])]
     #[Assert\NotBlank]
     private ?string $trainer = null;
 
     #[ORM\Column(name: 'TS_START_DATE', type: Types::DATETIME_IMMUTABLE)]
-    #[Groups(['training_session:get'])]
+    #[Groups(['training_session:get', 'training_session:patch'])]
     #[Assert\NotNull]
     private ?\DateTimeImmutable $startDate = null;
 
     #[ORM\Column(name: 'TS_END_DATE', type: Types::DATETIME_IMMUTABLE)]
-    #[Groups(['training_session:get'])]
+    #[Groups(['training_session:get', 'training_session:patch'])]
     #[Assert\NotNull]
     #[Assert\GreaterThan(propertyPath: 'startDate')]
     private ?\DateTimeImmutable $endDate = null;
 
     #[ORM\Column(name: 'TS_LOCATION', length: 160)]
-    #[Groups(['training_session:get'])]
+    #[Groups(['training_session:get', 'training_session:patch'])]
     #[Assert\NotBlank]
     private ?string $location = null;
 
     #[ORM\Column(name: 'TS_CAPACITY')]
-    #[Groups(['training_session:get'])]
+    #[Groups(['training_session:get', 'training_session:patch'])]
     #[Assert\Positive]
     #[Assert\NotNull]
     private ?int $capacity = null;
