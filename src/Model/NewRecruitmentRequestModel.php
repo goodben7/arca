@@ -22,6 +22,9 @@ class NewRecruitmentRequestModel
 
         #[Assert\NotBlank]
         public ?string $justification,
+
+        #[Assert\NotBlank]
+        public ?string $description,
     ) {
     }
 }

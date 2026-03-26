@@ -25,6 +25,7 @@ use App\State\CloseJobOfferProcessor;
 use App\State\CreateJobOfferProcessor;
 use App\State\PublishJobOfferProcessor;
 use App\State\SetJobOfferDraftProcessor;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -99,14 +100,18 @@ class JobOffer implements RessourceInterface
     #[Assert\NotBlank]
     private ?string $title = null;
 
+    #[ORM\Column(name: 'JO_DESCRIPTION', type: Types::TEXT)]
+    #[Groups(['job_offer:get', 'job_offer:patch'])]
+    #[Assert\NotBlank]
+    private ?string $description = null;
+
     #[ORM\Column(name: 'JO_DEPARTMENT', length: 16)]
     #[Groups(['job_offer:get'])]
     #[Assert\NotBlank]
     private ?string $department = null;
 
-    #[ORM\Column(name: 'JO_RECRUITMENT_REQUEST', length: 16)]
+    #[ORM\Column(name: 'JO_RECRUITMENT_REQUEST', length: 16, nullable: true)]
     #[Groups(['job_offer:get'])]
-    #[Assert\NotBlank]
     private ?string $recruitmentRequest = null;
 
     #[ORM\Column(name: 'JO_STATUS', length: 15)]
@@ -138,10 +143,12 @@ class JobOffer implements RessourceInterface
     public function getId(): ?string { return $this->id; }
     public function getTitle(): ?string { return $this->title; }
     public function setTitle(string $title): static { $this->title = $title; return $this; }
+    public function getDescription(): ?string { return $this->description; }
+    public function setDescription(string $description): static { $this->description = $description; return $this; }
     public function getDepartment(): ?string { return $this->department; }
     public function setDepartment(string $department): static { $this->department = $department; return $this; }
     public function getRecruitmentRequest(): ?string { return $this->recruitmentRequest; }
-    public function setRecruitmentRequest(string $recruitmentRequest): static { $this->recruitmentRequest = $recruitmentRequest; return $this; }
+    public function setRecruitmentRequest(?string $recruitmentRequest): static { $this->recruitmentRequest = $recruitmentRequest; return $this; }
     public function getStatus(): ?string { return $this->status; }
     public function setStatus(string $status): static { $this->status = $status; return $this; }
     public function getPublishedAt(): ?\DateTimeImmutable { return $this->publishedAt; }

@@ -32,13 +32,14 @@ class JobOfferManager
     public function createFrom(NewJobOfferModel $model): JobOffer
     {
         $department = $this->findDepartment($model->department);
-        $recruitmentRequest = $this->findRecruitmentRequest($model->recruitmentRequest);
+        $recruitmentRequest = $model->recruitmentRequest ? $this->findRecruitmentRequest($model->recruitmentRequest) : null;
 
         $jobOffer = new JobOffer();
         $jobOffer
             ->setTitle($model->title)
+            ->setDescription($model->description)
             ->setDepartment($department->getId())
-            ->setRecruitmentRequest($recruitmentRequest->getId())
+            ->setRecruitmentRequest($recruitmentRequest?->getId())
             ->setStatus(JobOfferConstants::STATUS_DRAFT)
         ;
 

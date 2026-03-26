@@ -44,6 +44,7 @@ class RecruitmentRequestManager
             ->setPosition($position->getId())
             ->setNumberOfPositions((int) $model->numberOfPositions)
             ->setJustification($model->justification)
+            ->setDescription($model->description)
             ->setStatus(RecruitmentRequestConstants::STATUS_PENDING)
             ->setRequestedBy($user ? $user->getId() : 'SYSTEM')
         ;
@@ -79,6 +80,7 @@ class RecruitmentRequestManager
         $position = $this->findPosition($request->getPosition());
         $this->jobOffers->createFrom(new NewJobOfferModel(
             $position->getTitle(),
+            $request->getDescription(),
             $request->getDepartment(),
             $request->getId(),
         ));

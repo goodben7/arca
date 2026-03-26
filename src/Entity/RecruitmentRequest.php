@@ -115,6 +115,11 @@ class RecruitmentRequest implements RessourceInterface
     #[Assert\NotBlank]
     private ?string $justification = null;
 
+    #[ORM\Column(name: 'RR_DESCRIPTION', type: Types::TEXT)]
+    #[Groups(['recruitment_request:get', 'recruitment_request:patch'])]
+    #[Assert\NotBlank]
+    private ?string $description = null;
+
     #[ORM\Column(name: 'RR_STATUS', length: 15)]
     #[Groups(['recruitment_request:get'])]
     #[Assert\Choice(callback: [RecruitmentRequestConstants::class, 'getStatuses'])]
@@ -156,6 +161,8 @@ class RecruitmentRequest implements RessourceInterface
     public function setNumberOfPositions(int $numberOfPositions): static { $this->numberOfPositions = $numberOfPositions; return $this; }
     public function getJustification(): ?string { return $this->justification; }
     public function setJustification(string $justification): static { $this->justification = $justification; return $this; }
+    public function getDescription(): ?string { return $this->description; }
+    public function setDescription(string $description): static { $this->description = $description; return $this; }
     public function getStatus(): ?string { return $this->status; }
     public function setStatus(string $status): static { $this->status = $status; return $this; }
     public function getApprovedBy(): ?string { return $this->approvedBy; }

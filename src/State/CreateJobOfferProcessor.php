@@ -22,6 +22,7 @@ class CreateJobOfferProcessor implements ProcessorInterface
     {
         $model = new NewJobOfferModel(
             $data->title,
+            $data->description,
             $data->department,
             $data->recruitmentRequest,
         );
