@@ -21,6 +21,7 @@ class EntityType
     public const string APPLICATION = 'APPLICATION'; // Candidature
     public const string TRAINING_REQUEST = 'TRAINING_REQUEST'; // Demande de formation
     public const string TRAINING_SESSION = 'TRAINING_SESSION'; // Session de formation
+    public const string TRAINING_ENROLLMENT = 'TRAINING_ENROLLMENT'; // Inscription à une session de formation
 
 
 
@@ -50,6 +51,7 @@ class EntityType
                 self::APPLICATION,
                 self::TRAINING_REQUEST,
                 self::TRAINING_SESSION,
+                self::TRAINING_ENROLLMENT,
             ]
         ];
     }

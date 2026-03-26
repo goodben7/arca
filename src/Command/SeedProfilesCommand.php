@@ -190,6 +190,16 @@ class SeedProfilesCommand extends Command
         ];
         $trainingSessionRead = ['ROLE_TRAINING_SESSION_LIST', 'ROLE_TRAINING_SESSION_DETAILS'];
 
+        $trainingEnrollmentCrud = [
+            'ROLE_TRAINING_ENROLLMENT_CREATE',
+            'ROLE_TRAINING_ENROLLMENT_LIST',
+            'ROLE_TRAINING_ENROLLMENT_DETAILS',
+            'ROLE_TRAINING_ENROLLMENT_COMPLETE',
+            'ROLE_TRAINING_ENROLLMENT_MARK_ABSENT',
+            'ROLE_TRAINING_ENROLLMENT_SET_ENROLLED',
+        ];
+        $trainingEnrollmentRead = ['ROLE_TRAINING_ENROLLMENT_LIST', 'ROLE_TRAINING_ENROLLMENT_DETAILS'];
+
         $specs = [
             [
                 'label' => 'Super Administrateur',
@@ -221,6 +231,7 @@ class SeedProfilesCommand extends Command
                     $applicationCrud,
                     $trainingRequestCrud,
                     $trainingSessionCrud,
+                    $trainingEnrollmentCrud,
                 ))),
             ],
             [
@@ -242,6 +253,7 @@ class SeedProfilesCommand extends Command
                     $applicationRead,
                     $trainingRequestRead,
                     $trainingSessionRead,
+                    $trainingEnrollmentRead,
                 ))),
             ],
             [

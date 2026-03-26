@@ -117,4 +117,11 @@ return static function (): iterable {
     yield Permission::new('ROLE_TRAINING_SESSION_CANCEL', "Annuler une session de formation");
     yield Permission::new('ROLE_TRAINING_SESSION_SET_PLANNED', "Remettre une session à l'état planifié");
 
+    yield Permission::new('ROLE_TRAINING_ENROLLMENT_CREATE', "Créer une inscription à une session de formation");
+    yield Permission::new('ROLE_TRAINING_ENROLLMENT_LIST', "Consulter la liste des inscriptions");
+    yield Permission::new('ROLE_TRAINING_ENROLLMENT_DETAILS', "Consulter les détails d'une inscription");
+    yield Permission::new('ROLE_TRAINING_ENROLLMENT_COMPLETE', "Marquer une inscription comme terminée");
+    yield Permission::new('ROLE_TRAINING_ENROLLMENT_MARK_ABSENT', "Marquer une inscription comme absente");
+    yield Permission::new('ROLE_TRAINING_ENROLLMENT_SET_ENROLLED', "Remettre une inscription à l'état ENROLLED");
+
 };

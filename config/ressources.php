@@ -15,6 +15,7 @@ use App\Entity\RecruitmentRequest;
 use App\Entity\Skill;
 use App\Entity\TrainingRequest;
 use App\Entity\TrainingSession;
+use App\Entity\TrainingEnrollment;
 use App\Entity\User;
 use App\Entity\WorkExperience;
 use App\Model\Ressource;
@@ -37,5 +38,6 @@ return static function (): iterable {
     yield Ressource::new("application", Application::class, "AP", true);
     yield Ressource::new("training_request", TrainingRequest::class, "TR", true);
     yield Ressource::new("training_session", TrainingSession::class, "TS", true);
+    yield Ressource::new("training_enrollment", TrainingEnrollment::class, "TE", true);
 
 };
