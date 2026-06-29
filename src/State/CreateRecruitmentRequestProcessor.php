@@ -26,6 +26,7 @@ class CreateRecruitmentRequestProcessor implements ProcessorInterface
             $data->numberOfPositions,
             $data->justification,
             $data->description,
+            $data->jobRole,
         );
 
         return $this->manager->createFrom($model);

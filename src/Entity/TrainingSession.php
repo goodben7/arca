@@ -88,6 +88,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ApiFilter(SearchFilter::class, properties: [
     'id' => 'exact',
     'trainingRequest' => 'exact',
+    'catalogItem' => 'exact',
     'status' => 'exact',
     'trainer' => 'ipartial',
     'location' => 'ipartial',
@@ -141,6 +142,11 @@ class TrainingSession implements RessourceInterface
     #[Assert\NotBlank]
     private ?string $trainingRequest = null;
 
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(name: 'TS_CATALOG_ITEM', referencedColumnName: 'TC_ID', nullable: true)]
+    #[Groups(['training_session:get', 'training_session:patch'])]
+    private ?TrainingCatalog $catalogItem = null;
+
     #[ORM\Column(name: 'TS_STATUS', length: 15)]
     #[Groups(['training_session:get'])]
     #[Assert\Choice(callback: [TrainingSessionConstants::class, 'getStatuses'])]
@@ -186,6 +192,8 @@ class TrainingSession implements RessourceInterface
     public function setCapacity(int $capacity): static { $this->capacity = $capacity; return $this; }
     public function getTrainingRequest(): ?string { return $this->trainingRequest; }
     public function setTrainingRequest(string $trainingRequest): static { $this->trainingRequest = $trainingRequest; return $this; }
+    public function getCatalogItem(): ?TrainingCatalog { return $this->catalogItem; }
+    public function setCatalogItem(?TrainingCatalog $catalogItem): static { $this->catalogItem = $catalogItem; return $this; }
     public function getStatus(): ?string { return $this->status; }
     public function setStatus(string $status): static { $this->status = $status; return $this; }
     public function getStartedAt(): ?\DateTimeImmutable { return $this->startedAt; }

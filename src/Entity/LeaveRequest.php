@@ -118,7 +118,7 @@ class LeaveRequest implements RessourceInterface
     #[Groups(['leave_request:get', 'leave_request:post', 'leave_request:patch'])]
     #[Assert\Choice(callback: [LeaveRequestConstants::class, 'getStatuses'])]
     #[Assert\NotBlank]
-    private ?string $status = null;
+    private ?string $status = LeaveRequestConstants::STATUS_PENDING;
 
     #[ORM\Column(name: 'LR_REASON', type: Types::TEXT, nullable: true)]
     #[Groups(['leave_request:get', 'leave_request:post', 'leave_request:patch'])]

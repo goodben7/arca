@@ -146,6 +146,8 @@ class SeedDepartmentsCommand extends Command
                 $position->getId(),
                 null,
                 null,
+                null,
+                null,
                 $managerProfile,
             ));
 

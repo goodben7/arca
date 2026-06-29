@@ -31,6 +31,10 @@ class NewTrainingSessionModel
         #[Assert\Length(max: 16)]
         #[Assert\Regex(pattern: '/^TR/', message: 'trainingRequest must be a TrainingRequest id (TR...)')]
         public ?string $trainingRequest,
+
+        #[Assert\Length(max: 16)]
+        #[Assert\Regex(pattern: '/^TC/', message: 'catalogItem must be a TrainingCatalog id (TC...)')]
+        public ?string $catalogItem = null,
     ) {
     }
 }

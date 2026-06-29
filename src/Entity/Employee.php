@@ -128,6 +128,8 @@ use Symfony\Component\Validator\Constraints as Assert;
     'firstName' => 'ipartial',
     'lastName' => 'ipartial',
     'status' => 'exact',
+    'jobRole' => 'exact',
+    'grade' => 'exact',
 ])]
 #[ApiFilter(\ApiPlatform\Doctrine\Orm\Filter\OrderFilter::class, properties: ['createdAt', 'updatedAt', 'hireDate', 'departureDate'])]
 #[ApiFilter(\ApiPlatform\Doctrine\Orm\Filter\DateFilter::class, properties: ['birthDate', 'hireDate', 'departureDate', 'createdAt', 'updatedAt'])]
@@ -261,9 +263,23 @@ class Employee implements RessourceInterface
     #[Groups(['employee:get', 'employee:patch'])]
     private ?string $department = null;
 
+    /**
+     * Identifiant du slot organisationnel (`Position`, préfixe PO) ou libellé libre (legacy).
+     * Ne pas confondre avec `jobRole` (fiche métier du référentiel RH).
+     */
     #[ORM\Column(name: 'EM_POSITION', length: 120, nullable: true)]
     #[Groups(['employee:get', 'employee:patch'])]
     private ?string $position = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(name: 'EM_JOB_ROLE', referencedColumnName: 'JR_ID', nullable: true)]
+    #[Groups(['employee:get', 'employee:patch'])]
+    private ?JobRole $jobRole = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(name: 'EM_GRADE', referencedColumnName: 'GR_ID', nullable: true)]
+    #[Groups(['employee:get', 'employee:patch'])]
+    private ?Grade $grade = null;
 
     #[ORM\Column(name: 'EM_MANAGER', nullable: true, length: 16)]
     #[Groups(['employee:get', 'employee:patch'])]
@@ -350,6 +366,10 @@ class Employee implements RessourceInterface
     public function setDepartment(?string $department): static { $this->department = $department; return $this; }
     public function getPosition(): ?string { return $this->position; }
     public function setPosition(?string $position): static { $this->position = $position; return $this; }
+    public function getJobRole(): ?JobRole { return $this->jobRole; }
+    public function setJobRole(?JobRole $jobRole): static { $this->jobRole = $jobRole; return $this; }
+    public function getGrade(): ?Grade { return $this->grade; }
+    public function setGrade(?Grade $grade): static { $this->grade = $grade; return $this; }
     public function getManager(): ?string { return $this->manager; }
     public function setManager(?string $manager): static { $this->manager = $manager; return $this; }
     public function getCreatedBy(): ?string { return $this->createdBy; }

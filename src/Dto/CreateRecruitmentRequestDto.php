@@ -25,4 +25,8 @@ class CreateRecruitmentRequestDto
 
     #[Assert\NotBlank]
     public string $description;
+
+    #[Assert\Length(max: 16)]
+    #[Assert\Regex(pattern: '/^JR/', message: 'jobRole must be a JobRole id (JR...)')]
+    public ?string $jobRole = null;
 }

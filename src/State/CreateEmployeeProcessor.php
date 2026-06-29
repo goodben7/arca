@@ -36,6 +36,8 @@ class CreateEmployeeProcessor implements ProcessorInterface
             $data->position,
             $data->employeeNumber,
             $data->managerId,
+            $data->jobRole,
+            $data->grade,
             $data->profile,
         );
 

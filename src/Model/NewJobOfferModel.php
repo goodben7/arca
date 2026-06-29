@@ -21,6 +21,10 @@ class NewJobOfferModel
         #[Assert\Length(max: 16)]
         #[Assert\Regex(pattern: '/^RR/', message: 'recruitmentRequest must be a RecruitmentRequest id (RR...)')]
         public ?string $recruitmentRequest = null,
+
+        #[Assert\Length(max: 16)]
+        #[Assert\Regex(pattern: '/^JR/', message: 'jobRole must be a JobRole id (JR...)')]
+        public ?string $jobRole = null,
     ) {
     }
 }

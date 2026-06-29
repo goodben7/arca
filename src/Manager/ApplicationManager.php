@@ -6,6 +6,7 @@ use App\Entity\Application;
 use App\Entity\JobOffer;
 use App\Entity\RecruitmentRequest;
 use App\Event\ActivityEvent;
+use App\Event\Domain\ApplicationHiredEvent;
 use App\Exception\InvalidActionInputException;
 use App\Exception\UnavailableDataException;
 use App\Message\Query\GetUserDetails;
@@ -22,6 +23,7 @@ use App\Model\ShortlistApplicationModel;
 use App\Service\ActivityEventDispatcher;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class ApplicationManager
 {
@@ -31,6 +33,7 @@ class ApplicationManager
         private Security $security,
         private QueryBusInterface $queries,
         private EmployeeManager $employees,
+        private EventDispatcherInterface $domainEventDispatcher,
     ) {
     }
 
@@ -105,7 +108,11 @@ class ApplicationManager
         $this->assertActionAllowed($application, ApplicationConstants::ACTION_HIRE);
         $this->applyAction($application, ApplicationConstants::ACTION_HIRE);
 
-        $this->employees->createFrom($this->buildEmployeeModelFromApplication($application));
+        $employee = $this->employees->createFrom($this->buildEmployeeModelFromApplication($application));
+
+        $this->domainEventDispatcher->dispatch(
+            new ApplicationHiredEvent($application, $employee, $this->resolveActorId())
+        );
 
         $this->eventDispatcher->dispatch($application, ActivityEvent::ACTION_EDIT);
         return $application;
@@ -162,6 +169,7 @@ class ApplicationManager
         $recruitmentRequest = $this->findRecruitmentRequest($jobOffer->getRecruitmentRequest());
 
         $hireDate = $application->getHiredAt() ?: new \DateTimeImmutable();
+        $jobRole = $jobOffer->getJobRole();
 
         return new NewEmployeeModel(
             $application->getFirstName(),
@@ -178,6 +186,8 @@ class ApplicationManager
             $recruitmentRequest->getPosition(),
             null,
             null,
+            $jobRole?->getId(),
+            $jobRole?->getGrade()?->getId(),
             null,
         );
     }

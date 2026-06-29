@@ -73,6 +73,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     'department' => 'exact',
     'requestedBy' => 'exact',
     'position' => 'exact',
+    'jobRole' => 'exact',
     'status' => 'exact',
     'approvedBy' => 'exact',
     'rejectedBy' => 'exact',
@@ -103,6 +104,11 @@ class RecruitmentRequest implements RessourceInterface
     #[Groups(['recruitment_request:get'])]
     #[Assert\NotBlank]
     private ?string $position = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(name: 'RR_JOB_ROLE', referencedColumnName: 'JR_ID', nullable: true)]
+    #[Groups(['recruitment_request:get', 'recruitment_request:patch'])]
+    private ?JobRole $jobRole = null;
 
     #[ORM\Column(name: 'RR_NUMBER_OF_POSITIONS')]
     #[Groups(['recruitment_request:get', 'recruitment_request:patch'])]
@@ -157,6 +163,8 @@ class RecruitmentRequest implements RessourceInterface
     public function setRequestedBy(string $requestedBy): static { $this->requestedBy = $requestedBy; return $this; }
     public function getPosition(): ?string { return $this->position; }
     public function setPosition(string $position): static { $this->position = $position; return $this; }
+    public function getJobRole(): ?JobRole { return $this->jobRole; }
+    public function setJobRole(?JobRole $jobRole): static { $this->jobRole = $jobRole; return $this; }
     public function getNumberOfPositions(): ?int { return $this->numberOfPositions; }
     public function setNumberOfPositions(int $numberOfPositions): static { $this->numberOfPositions = $numberOfPositions; return $this; }
     public function getJustification(): ?string { return $this->justification; }

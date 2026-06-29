@@ -42,5 +42,13 @@ class CreateEmployeeDto
 
     public ?string $managerId = null;
 
+    #[Assert\Length(max: 16)]
+    #[Assert\Regex(pattern: '/^JR/', message: 'jobRole must be a JobRole id (JR...)')]
+    public ?string $jobRole = null;
+
+    #[Assert\Length(max: 16)]
+    #[Assert\Regex(pattern: '/^GR/', message: 'grade must be a Grade id (GR...)')]
+    public ?string $grade = null;
+
     public ?Profile $profile = null;
 }

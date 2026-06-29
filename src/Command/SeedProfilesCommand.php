@@ -74,6 +74,14 @@ class SeedProfilesCommand extends Command
         ];
         $workExperienceRead = ['ROLE_WORK_EXPERIENCE_LIST', 'ROLE_WORK_EXPERIENCE_DETAILS'];
 
+        $skillCategoryCrud = [
+            'ROLE_SKILL_CATEGORY_CREATE',
+            'ROLE_SKILL_CATEGORY_LIST',
+            'ROLE_SKILL_CATEGORY_DETAILS',
+            'ROLE_SKILL_CATEGORY_UPDATE',
+        ];
+        $skillCategoryRead = ['ROLE_SKILL_CATEGORY_LIST', 'ROLE_SKILL_CATEGORY_DETAILS'];
+
         $skillCrud = [
             'ROLE_SKILL_CREATE',
             'ROLE_SKILL_LIST',
@@ -81,6 +89,22 @@ class SeedProfilesCommand extends Command
             'ROLE_SKILL_UPDATE',
         ];
         $skillRead = ['ROLE_SKILL_LIST', 'ROLE_SKILL_DETAILS'];
+
+        $employeeSkillCrud = [
+            'ROLE_EMPLOYEE_SKILL_CREATE',
+            'ROLE_EMPLOYEE_SKILL_LIST',
+            'ROLE_EMPLOYEE_SKILL_DETAILS',
+            'ROLE_EMPLOYEE_SKILL_UPDATE',
+        ];
+        $employeeSkillRead = ['ROLE_EMPLOYEE_SKILL_LIST', 'ROLE_EMPLOYEE_SKILL_DETAILS'];
+
+        $jobRoleRequiredSkillCrud = [
+            'ROLE_JOB_ROLE_REQUIRED_SKILL_CREATE',
+            'ROLE_JOB_ROLE_REQUIRED_SKILL_LIST',
+            'ROLE_JOB_ROLE_REQUIRED_SKILL_DETAILS',
+            'ROLE_JOB_ROLE_REQUIRED_SKILL_UPDATE',
+        ];
+        $jobRoleRequiredSkillRead = ['ROLE_JOB_ROLE_REQUIRED_SKILL_LIST', 'ROLE_JOB_ROLE_REQUIRED_SKILL_DETAILS'];
 
         $docCrud = [
             'ROLE_DOC_CREATE',
@@ -194,11 +218,162 @@ class SeedProfilesCommand extends Command
             'ROLE_TRAINING_ENROLLMENT_CREATE',
             'ROLE_TRAINING_ENROLLMENT_LIST',
             'ROLE_TRAINING_ENROLLMENT_DETAILS',
+            'ROLE_TRAINING_ENROLLMENT_START',
             'ROLE_TRAINING_ENROLLMENT_COMPLETE',
+            'ROLE_TRAINING_ENROLLMENT_CERTIFY',
             'ROLE_TRAINING_ENROLLMENT_MARK_ABSENT',
             'ROLE_TRAINING_ENROLLMENT_SET_ENROLLED',
         ];
         $trainingEnrollmentRead = ['ROLE_TRAINING_ENROLLMENT_LIST', 'ROLE_TRAINING_ENROLLMENT_DETAILS'];
+
+        $trainingCatalogCrud = [
+            'ROLE_TRAINING_CATALOG_CREATE',
+            'ROLE_TRAINING_CATALOG_LIST',
+            'ROLE_TRAINING_CATALOG_DETAILS',
+            'ROLE_TRAINING_CATALOG_UPDATE',
+        ];
+        $trainingCatalogRead = ['ROLE_TRAINING_CATALOG_LIST', 'ROLE_TRAINING_CATALOG_DETAILS'];
+
+        $jobRoleRequiredTrainingCrud = [
+            'ROLE_JOB_ROLE_REQUIRED_TRAINING_CREATE',
+            'ROLE_JOB_ROLE_REQUIRED_TRAINING_LIST',
+            'ROLE_JOB_ROLE_REQUIRED_TRAINING_DETAILS',
+            'ROLE_JOB_ROLE_REQUIRED_TRAINING_UPDATE',
+        ];
+        $jobRoleRequiredTrainingRead = ['ROLE_JOB_ROLE_REQUIRED_TRAINING_LIST', 'ROLE_JOB_ROLE_REQUIRED_TRAINING_DETAILS'];
+
+        $onboardingProcessCrud = [
+            'ROLE_ONBOARDING_PROCESS_LIST',
+            'ROLE_ONBOARDING_PROCESS_DETAILS',
+            'ROLE_ONBOARDING_PROCESS_COMPLETE',
+            'ROLE_ONBOARDING_PROCESS_CANCEL',
+        ];
+        $onboardingProcessRead = ['ROLE_ONBOARDING_PROCESS_LIST', 'ROLE_ONBOARDING_PROCESS_DETAILS'];
+
+        $onboardingTaskCrud = [
+            'ROLE_ONBOARDING_TASK_LIST',
+            'ROLE_ONBOARDING_TASK_DETAILS',
+            'ROLE_ONBOARDING_TASK_START',
+            'ROLE_ONBOARDING_TASK_COMPLETE',
+            'ROLE_ONBOARDING_TASK_CANCEL',
+        ];
+        $onboardingTaskRead = ['ROLE_ONBOARDING_TASK_LIST', 'ROLE_ONBOARDING_TASK_DETAILS'];
+
+        $evaluationCycleCrud = [
+            'ROLE_EVALUATION_CYCLE_CREATE',
+            'ROLE_EVALUATION_CYCLE_LIST',
+            'ROLE_EVALUATION_CYCLE_DETAILS',
+            'ROLE_EVALUATION_CYCLE_UPDATE',
+            'ROLE_EVALUATION_CYCLE_OPEN',
+            'ROLE_EVALUATION_CYCLE_CLOSE',
+        ];
+        $evaluationCycleRead = ['ROLE_EVALUATION_CYCLE_LIST', 'ROLE_EVALUATION_CYCLE_DETAILS'];
+
+        $performanceReviewCrud = [
+            'ROLE_PERFORMANCE_REVIEW_CREATE',
+            'ROLE_PERFORMANCE_REVIEW_LIST',
+            'ROLE_PERFORMANCE_REVIEW_DETAILS',
+            'ROLE_PERFORMANCE_REVIEW_UPDATE',
+            'ROLE_PERFORMANCE_REVIEW_SUBMIT',
+            'ROLE_PERFORMANCE_REVIEW_VALIDATE',
+        ];
+        $performanceReviewRead = ['ROLE_PERFORMANCE_REVIEW_LIST', 'ROLE_PERFORMANCE_REVIEW_DETAILS'];
+
+        $objectiveCrud = [
+            'ROLE_OBJECTIVE_CREATE',
+            'ROLE_OBJECTIVE_LIST',
+            'ROLE_OBJECTIVE_DETAILS',
+            'ROLE_OBJECTIVE_UPDATE',
+            'ROLE_OBJECTIVE_ACTIVATE',
+            'ROLE_OBJECTIVE_COMPLETE',
+            'ROLE_OBJECTIVE_CANCEL',
+        ];
+        $objectiveRead = ['ROLE_OBJECTIVE_LIST', 'ROLE_OBJECTIVE_DETAILS'];
+
+        $promotionEligibilityRead = ['ROLE_EMPLOYEE_PROMOTION_ELIGIBILITY'];
+
+        $careerPlanCrud = [
+            'ROLE_CAREER_PLAN_CREATE',
+            'ROLE_CAREER_PLAN_LIST',
+            'ROLE_CAREER_PLAN_DETAILS',
+            'ROLE_CAREER_PLAN_UPDATE',
+        ];
+        $careerPlanRead = ['ROLE_CAREER_PLAN_LIST', 'ROLE_CAREER_PLAN_DETAILS'];
+
+        $mobilityRequestCrud = [
+            'ROLE_MOBILITY_REQUEST_CREATE',
+            'ROLE_MOBILITY_REQUEST_LIST',
+            'ROLE_MOBILITY_REQUEST_DETAILS',
+            'ROLE_MOBILITY_REQUEST_SUBMIT',
+            'ROLE_MOBILITY_REQUEST_APPROVE',
+            'ROLE_MOBILITY_REQUEST_REJECT',
+            'ROLE_MOBILITY_REQUEST_CANCEL',
+        ];
+        $mobilityRequestRead = ['ROLE_MOBILITY_REQUEST_LIST', 'ROLE_MOBILITY_REQUEST_DETAILS'];
+        $mobilityRequestManage = [
+            'ROLE_MOBILITY_REQUEST_LIST',
+            'ROLE_MOBILITY_REQUEST_DETAILS',
+            'ROLE_MOBILITY_REQUEST_APPROVE',
+            'ROLE_MOBILITY_REQUEST_REJECT',
+        ];
+        $mobilityRequestSelf = [
+            'ROLE_MOBILITY_REQUEST_CREATE',
+            'ROLE_MOBILITY_REQUEST_LIST',
+            'ROLE_MOBILITY_REQUEST_DETAILS',
+            'ROLE_MOBILITY_REQUEST_SUBMIT',
+            'ROLE_MOBILITY_REQUEST_CANCEL',
+        ];
+
+        $compensationHistoryCrud = [
+            'ROLE_COMPENSATION_HISTORY_LIST',
+            'ROLE_COMPENSATION_HISTORY_DETAILS',
+            'ROLE_COMPENSATION_HISTORY_RECORD',
+        ];
+        $compensationHistoryRead = ['ROLE_COMPENSATION_HISTORY_LIST', 'ROLE_COMPENSATION_HISTORY_DETAILS'];
+
+        $benefitCrud = [
+            'ROLE_BENEFIT_CREATE',
+            'ROLE_BENEFIT_LIST',
+            'ROLE_BENEFIT_DETAILS',
+            'ROLE_BENEFIT_UPDATE',
+        ];
+        $benefitRead = ['ROLE_BENEFIT_LIST', 'ROLE_BENEFIT_DETAILS'];
+
+        $employeeBenefitCrud = [
+            'ROLE_EMPLOYEE_BENEFIT_CREATE',
+            'ROLE_EMPLOYEE_BENEFIT_LIST',
+            'ROLE_EMPLOYEE_BENEFIT_DETAILS',
+            'ROLE_EMPLOYEE_BENEFIT_UPDATE',
+        ];
+        $employeeBenefitRead = ['ROLE_EMPLOYEE_BENEFIT_LIST', 'ROLE_EMPLOYEE_BENEFIT_DETAILS'];
+
+        $exitProcessCrud = [
+            'ROLE_EXIT_PROCESS_CREATE',
+            'ROLE_EXIT_PROCESS_LIST',
+            'ROLE_EXIT_PROCESS_DETAILS',
+            'ROLE_EXIT_PROCESS_START',
+            'ROLE_EXIT_PROCESS_COMPLETE',
+            'ROLE_EXIT_PROCESS_CANCEL',
+        ];
+        $exitProcessRead = ['ROLE_EXIT_PROCESS_LIST', 'ROLE_EXIT_PROCESS_DETAILS'];
+
+        $exitTaskCrud = [
+            'ROLE_EXIT_TASK_LIST',
+            'ROLE_EXIT_TASK_DETAILS',
+            'ROLE_EXIT_TASK_START',
+            'ROLE_EXIT_TASK_COMPLETE',
+            'ROLE_EXIT_TASK_CANCEL',
+        ];
+        $exitTaskRead = ['ROLE_EXIT_TASK_LIST', 'ROLE_EXIT_TASK_DETAILS'];
+
+        $successionPlanCrud = [
+            'ROLE_SUCCESSION_PLAN_CREATE',
+            'ROLE_SUCCESSION_PLAN_LIST',
+            'ROLE_SUCCESSION_PLAN_DETAILS',
+            'ROLE_SUCCESSION_PLAN_UPDATE',
+        ];
+        $successionPlanRead = ['ROLE_SUCCESSION_PLAN_LIST', 'ROLE_SUCCESSION_PLAN_DETAILS'];
+        $hrDashboardView = ['ROLE_HR_DASHBOARD_VIEW'];
 
         $specs = [
             [
@@ -220,7 +395,10 @@ class SeedProfilesCommand extends Command
                     $activityRead,
                     $employeeCrud,
                     $workExperienceCrud,
+                    $skillCategoryCrud,
                     $skillCrud,
+                    $employeeSkillCrud,
+                    $jobRoleRequiredSkillCrud,
                     $docCrud,
                     $departmentCrud,
                     $positionCrud,
@@ -232,6 +410,23 @@ class SeedProfilesCommand extends Command
                     $trainingRequestCrud,
                     $trainingSessionCrud,
                     $trainingEnrollmentCrud,
+                    $trainingCatalogCrud,
+                    $jobRoleRequiredTrainingCrud,
+                    $onboardingProcessCrud,
+                    $onboardingTaskCrud,
+                    $evaluationCycleCrud,
+                    $performanceReviewCrud,
+                    $objectiveCrud,
+                    $promotionEligibilityRead,
+                    $careerPlanCrud,
+                    $mobilityRequestCrud,
+                    $compensationHistoryCrud,
+                    $benefitCrud,
+                    $employeeBenefitCrud,
+                    $exitProcessCrud,
+                    $exitTaskCrud,
+                    $successionPlanCrud,
+                    $hrDashboardView,
                 ))),
             ],
             [
@@ -242,7 +437,10 @@ class SeedProfilesCommand extends Command
                     $activityRead,
                     $employeeUpdate,
                     $workExperienceRead,
+                    $skillCategoryRead,
                     $skillRead,
+                    $employeeSkillRead,
+                    $jobRoleRequiredSkillRead,
                     ['ROLE_DOC_CREATE', ...$docRead],
                     $departmentRead,
                     $positionRead,
@@ -254,6 +452,23 @@ class SeedProfilesCommand extends Command
                     $trainingRequestRead,
                     $trainingSessionRead,
                     $trainingEnrollmentRead,
+                    $trainingCatalogRead,
+                    $jobRoleRequiredTrainingRead,
+                    $onboardingProcessRead,
+                    $onboardingTaskRead,
+                    $evaluationCycleRead,
+                    $performanceReviewRead,
+                    $objectiveRead,
+                    $promotionEligibilityRead,
+                    $careerPlanRead,
+                    $mobilityRequestRead,
+                    $compensationHistoryRead,
+                    $benefitRead,
+                    $employeeBenefitRead,
+                    $exitProcessRead,
+                    $exitTaskRead,
+                    $successionPlanRead,
+                    $hrDashboardView,
                 ))),
             ],
             [
@@ -263,12 +478,20 @@ class SeedProfilesCommand extends Command
                     $activityRead,
                     $employeeRead,
                     $workExperienceRead,
+                    $skillCategoryRead,
                     $skillRead,
+                    $employeeSkillRead,
+                    $jobRoleRequiredSkillRead,
                     $docRead,
                     $departmentRead,
                     $positionRead,
                     $contractRead,
                     $leaveRequestRead,
+                    $promotionEligibilityRead,
+                    $careerPlanRead,
+                    $mobilityRequestManage,
+                    $successionPlanRead,
+                    $hrDashboardView,
                 ))),
             ],
             [
@@ -283,6 +506,8 @@ class SeedProfilesCommand extends Command
                     $contractRead,
                     $docRead,
                     $leaveRequestManage,
+                    $promotionEligibilityRead,
+                    $mobilityRequestManage,
                 ))),
             ],
             [
@@ -293,12 +518,30 @@ class SeedProfilesCommand extends Command
                     $activityRead,
                     $employeeCrud,
                     $workExperienceCrud,
+                    $skillCategoryCrud,
                     $skillCrud,
+                    $employeeSkillCrud,
+                    $jobRoleRequiredSkillCrud,
                     $docCrud,
                     $departmentRead,
                     $positionRead,
                     $contractCrud,
                     $leaveRequestManage,
+                    $onboardingProcessCrud,
+                    $onboardingTaskCrud,
+                    $evaluationCycleCrud,
+                    $performanceReviewCrud,
+                    $objectiveCrud,
+                    $promotionEligibilityRead,
+                    $careerPlanCrud,
+                    $mobilityRequestCrud,
+                    $compensationHistoryCrud,
+                    $benefitCrud,
+                    $employeeBenefitCrud,
+                    $exitProcessCrud,
+                    $exitTaskCrud,
+                    $successionPlanCrud,
+                    $hrDashboardView,
                 ))),
             ],
             [
@@ -308,9 +551,11 @@ class SeedProfilesCommand extends Command
                     $userSelf,
                     $employeeUpdate,
                     $workExperienceCrud,
-                    $skillCrud,
+                    $employeeSkillCrud,
+                    $skillRead,
                     ['ROLE_DOC_CREATE', ...$docRead],
                     ['ROLE_LEAVE_REQUEST_CREATE', 'ROLE_LEAVE_REQUEST_LIST', 'ROLE_LEAVE_REQUEST_DETAILS', 'ROLE_LEAVE_REQUEST_UPDATE'],
+                    $mobilityRequestSelf,
                 ))),
             ],
             [

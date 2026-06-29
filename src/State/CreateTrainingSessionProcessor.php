@@ -28,6 +28,7 @@ class CreateTrainingSessionProcessor implements ProcessorInterface
             $data->location,
             $data->capacity,
             $data->trainingRequest,
+            $data->catalogItem,
         );
 
         return $this->manager->createFrom($model);

@@ -81,6 +81,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     'id' => 'exact',
     'department' => 'exact',
     'recruitmentRequest' => 'exact',
+    'jobRole' => 'exact',
     'status' => 'exact',
 ])]
 #[ApiFilter(OrderFilter::class, properties: ['createdAt'])]
@@ -113,6 +114,11 @@ class JobOffer implements RessourceInterface
     #[ORM\Column(name: 'JO_RECRUITMENT_REQUEST', length: 16, nullable: true)]
     #[Groups(['job_offer:get'])]
     private ?string $recruitmentRequest = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(name: 'JO_JOB_ROLE', referencedColumnName: 'JR_ID', nullable: true)]
+    #[Groups(['job_offer:get', 'job_offer:patch'])]
+    private ?JobRole $jobRole = null;
 
     #[ORM\Column(name: 'JO_STATUS', length: 15)]
     #[Groups(['job_offer:get'])]
@@ -149,6 +155,8 @@ class JobOffer implements RessourceInterface
     public function setDepartment(string $department): static { $this->department = $department; return $this; }
     public function getRecruitmentRequest(): ?string { return $this->recruitmentRequest; }
     public function setRecruitmentRequest(?string $recruitmentRequest): static { $this->recruitmentRequest = $recruitmentRequest; return $this; }
+    public function getJobRole(): ?JobRole { return $this->jobRole; }
+    public function setJobRole(?JobRole $jobRole): static { $this->jobRole = $jobRole; return $this; }
     public function getStatus(): ?string { return $this->status; }
     public function setStatus(string $status): static { $this->status = $status; return $this; }
     public function getPublishedAt(): ?\DateTimeImmutable { return $this->publishedAt; }

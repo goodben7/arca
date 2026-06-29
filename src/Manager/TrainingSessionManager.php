@@ -2,6 +2,7 @@
 
 namespace App\Manager;
 
+use App\Entity\TrainingCatalog;
 use App\Entity\TrainingRequest;
 use App\Entity\TrainingSession;
 use App\Event\ActivityEvent;
@@ -38,8 +39,11 @@ class TrainingSessionManager
             ->setLocation($model->location)
             ->setCapacity((int) $model->capacity)
             ->setTrainingRequest($trainingRequest->getId())
-            ->setStatus(TrainingSessionConstants::STATUS_PLANNED)
-        ;
+            ->setStatus(TrainingSessionConstants::STATUS_PLANNED);
+
+        if ($model->catalogItem) {
+            $session->setCatalogItem($this->findTrainingCatalog($model->catalogItem));
+        }
 
         $this->em->persist($session);
         $this->em->flush();
@@ -100,6 +104,16 @@ class TrainingSessionManager
             throw new UnavailableDataException(\sprintf('cannot find training request with id: %s', $trainingRequestId));
         }
         return $request;
+    }
+
+    private function findTrainingCatalog(string $catalogId): TrainingCatalog
+    {
+        $catalog = $this->em->find(TrainingCatalog::class, $catalogId);
+        if (null === $catalog) {
+            throw new UnavailableDataException(sprintf('cannot find training catalog with id: %s', $catalogId));
+        }
+
+        return $catalog;
     }
 
     private function findTrainingSession(?string $trainingSessionId): TrainingSession

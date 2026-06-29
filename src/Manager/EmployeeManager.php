@@ -6,6 +6,9 @@ use App\Entity\Employee;
 use App\Entity\User;
 use App\Enum\EntityType;
 use App\Event\ActivityEvent;
+use App\Event\Domain\EmployeeActivatedEvent;
+use App\Event\Domain\EmployeeCreatedEvent;
+use App\Event\Domain\EmployeeTerminatedEvent;
 use App\Exception\InvalidActionInputException;
 use App\Exception\UnavailableDataException;
 use App\Message\Command\CommandBusInterface;
@@ -27,6 +30,7 @@ use App\Repository\ProfileRepository;
 use App\Service\ActivityEventDispatcher;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class EmployeeManager
 {
@@ -37,6 +41,9 @@ class EmployeeManager
         private ProfileRepository $profileRepository,
         private QueryBusInterface $queries,
         private CommandBusInterface $bus,
+        private EventDispatcherInterface $domainEventDispatcher,
+        private JobRoleManager $jobRoles,
+        private GradeManager $grades,
     ) {
     }
 
@@ -67,6 +74,11 @@ class EmployeeManager
 
         $employee = new Employee();
 
+        $jobRole = $model->jobRole ? $this->jobRoles->find($model->jobRole) : null;
+        $grade = $model->grade
+            ? $this->grades->find($model->grade)
+            : $jobRole?->getGrade();
+
         $employee
             ->setCreatedBy($user ? $user->getId() : 'SYSTEM') 
             ->setFirstName($model->firstName)
@@ -79,9 +91,11 @@ class EmployeeManager
             ->setMaritalStatus($model->maritalStatus)
             ->setHireDate($model->hireDate)
             ->setDepartureDate($model->departureDate)
-            ->setStatus(EmployeeConstants::STATUS_ACTIVE)
+            ->setStatus(EmployeeConstants::STATUS_INACTIVE)
             ->setDepartment($model->department)
             ->setPosition($model->position)
+            ->setJobRole($jobRole)
+            ->setGrade($grade)
             ->setCreatedAt(new \DateTimeImmutable('now'));
 
         if ($model->employeeNumber) {
@@ -92,13 +106,19 @@ class EmployeeManager
 
 
         $this->em->persist($employee);
+        $this->em->flush();
 
         $profile = $model->profile ?: $this->profileRepository->findOneBy(['personType' => UserProxyIntertace::PERSON_EMPLOYEE]);
 
         if (null === $profile) {
             throw new UnavailableDataException('cannot find profile with person type: employee');
         }
-        
+
+        $employeeId = $employee->getId();
+        if (null === $employeeId) {
+            throw new \LogicException('Employee ID must be generated before creating the linked user account.');
+        }
+
         $user = $this->bus->dispatch(
             new CreateUserCommand(
             $employee->getEmail(),
@@ -106,18 +126,20 @@ class EmployeeManager
             $profile,
             $employee->getPhone(),
             $employee->getDisplayName(),
-            $employee->getId(),
+            $employeeId,
             EntityType::EMPLOYEE
             )
         );
 
-        $employee->setUserId($user->getId());  
-
-        $this->em->persist($employee);
+        $employee->setUserId($user->getId());
 
         $this->em->flush();
 
         $this->eventDispatcher->dispatch($employee, ActivityEvent::ACTION_CREATE);
+
+        $this->domainEventDispatcher->dispatch(
+            new EmployeeCreatedEvent($employee, $this->resolveActorId())
+        );
 
         return $employee;
     }
@@ -127,10 +149,15 @@ class EmployeeManager
         $employee = $this->findEmployee($model->employeeId);
 
         $this->assertActionAllowed($employee, EmployeeConstants::ACTION_ACTIVATE);
+        $previousStatus = $employee->getStatus();
         $this->applyEmployeeAction($employee, EmployeeConstants::ACTION_ACTIVATE);
         $this->em->flush();
 
         $this->eventDispatcher->dispatch($employee, ActivityEvent::ACTION_EDIT, null, 'employee activated');
+
+        $this->domainEventDispatcher->dispatch(
+            new EmployeeActivatedEvent($employee, $this->resolveActorId(), $previousStatus)
+        );
 
         return $employee;
     }
@@ -196,6 +223,10 @@ class EmployeeManager
         $this->em->flush();
 
         $this->eventDispatcher->dispatch($employee, ActivityEvent::ACTION_EDIT, null, 'employee terminated');
+
+        $this->domainEventDispatcher->dispatch(
+            new EmployeeTerminatedEvent($employee, $this->resolveActorId())
+        );
 
         return $employee;
     }

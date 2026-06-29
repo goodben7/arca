@@ -4,6 +4,7 @@ namespace App\Manager;
 
 use App\Entity\Contract;
 use App\Entity\User;
+use App\Event\Domain\ContractActivatedEvent;
 use App\Exception\InvalidActionInputException;
 use App\Exception\UnavailableDataException;
 use App\Message\Query\GetUserDetails;
@@ -15,6 +16,7 @@ use App\Model\EndContractModel;
 use App\Model\SetContractPendingModel;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class ContractManager
 {
@@ -22,6 +24,7 @@ class ContractManager
         private EntityManagerInterface $em,
         private Security $security,
         private QueryBusInterface $queries,
+        private EventDispatcherInterface $domainEventDispatcher,
     ) {
     }
 
@@ -32,6 +35,10 @@ class ContractManager
         $this->assertActionAllowed($contract, ContractConstants::ACTION_ACTIVATE);
         $this->applyContractAction($contract, ContractConstants::ACTION_ACTIVATE);
         $this->em->flush();
+
+        $this->domainEventDispatcher->dispatch(
+            new ContractActivatedEvent($contract, $this->resolveActorId())
+        );
 
         return $contract;
     }

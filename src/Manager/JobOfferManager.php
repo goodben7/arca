@@ -26,6 +26,7 @@ class JobOfferManager
         private ActivityEventDispatcher $eventDispatcher,
         private Security $security,
         private QueryBusInterface $queries,
+        private JobRoleManager $jobRoles,
     ) {
     }
 
@@ -33,6 +34,7 @@ class JobOfferManager
     {
         $department = $this->findDepartment($model->department);
         $recruitmentRequest = $model->recruitmentRequest ? $this->findRecruitmentRequest($model->recruitmentRequest) : null;
+        $jobRole = $model->jobRole ? $this->jobRoles->find($model->jobRole) : null;
 
         $jobOffer = new JobOffer();
         $jobOffer
@@ -40,6 +42,7 @@ class JobOfferManager
             ->setDescription($model->description)
             ->setDepartment($department->getId())
             ->setRecruitmentRequest($recruitmentRequest?->getId())
+            ->setJobRole($jobRole)
             ->setStatus(JobOfferConstants::STATUS_DRAFT)
         ;
 

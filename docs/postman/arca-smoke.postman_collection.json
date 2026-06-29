@@ -1,0 +1,269 @@
+{
+  "info": {
+    "name": "Arca — Smoke tests (phases 0–9)",
+    "description": "Scénarios manuels équivalents à `php bin/console ar:smoke:test`.\n\nPrérequis:\n1. API démarrée (`symfony serve` ou équivalent)\n2. `app:seed:job-architecture` + `app:seed:skills` + `ar:seed:profiles`\n3. JWT valide (variable `token`)\n4. Worker async: `php bin/console messenger:consume async -vv`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000/api" },
+    { "key": "token", "value": "" },
+    { "key": "employeeId", "value": "" },
+    { "key": "targetJobRoleId", "value": "" },
+    { "key": "mobilityRequestId", "value": "" },
+    { "key": "benefitId", "value": "" },
+    { "key": "exitProcessId", "value": "" },
+    { "key": "exitTaskId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "0 — Auth (login)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"admin@example.com\",\n  \"password\": \"password\"\n}"
+        },
+        "url": "{{baseUrl}}/../auth/login",
+        "description": "Adapter username/password. Copier le token JWT dans la variable `token`."
+      }
+    },
+    {
+      "name": "1 — Promotion eligibility",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": {
+          "raw": "{{baseUrl}}/employees/{{employeeId}}/promotion-eligibility?targetJobRole={{targetJobRoleId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["employees", "{{employeeId}}", "promotion-eligibility"],
+          "query": [{ "key": "targetJobRole", "value": "{{targetJobRoleId}}" }]
+        }
+      }
+    },
+    {
+      "name": "2a — Mobility TRANSFER — create",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employee\": \"{{employeeId}}\",\n  \"type\": \"TRANSFER\",\n  \"targetDepartment\": \"Audit\",\n  \"reason\": \"smoke test transfer\"\n}"
+        },
+        "url": "{{baseUrl}}/mobility_requests"
+      }
+    },
+    {
+      "name": "2b — Mobility — submit",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"mobilityRequestId\": \"{{mobilityRequestId}}\"\n}"
+        },
+        "url": "{{baseUrl}}/mobility_requests/submissions"
+      }
+    },
+    {
+      "name": "2c — Mobility — approve (×3)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"mobilityRequestId\": \"{{mobilityRequestId}}\"\n}"
+        },
+        "url": "{{baseUrl}}/mobility_requests/approvals",
+        "description": "Exécuter 3 fois (manager → RH → direction) jusqu'à status IMPLEMENTED."
+      }
+    },
+    {
+      "name": "2d — Employee journey",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/employees/{{employeeId}}/journey"
+      }
+    },
+    {
+      "name": "3 — Manual compensation",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employee\": \"{{employeeId}}\",\n  \"newSalary\": \"13500.00\",\n  \"effectiveDate\": \"2026-07-01\",\n  \"reason\": \"smoke test manual adjustment\"\n}"
+        },
+        "url": "{{baseUrl}}/compensation_histories/recordings"
+      }
+    },
+    {
+      "name": "4 — Compensation history list",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": {
+          "raw": "{{baseUrl}}/compensation_histories?employee={{employeeId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["compensation_histories"],
+          "query": [{ "key": "employee", "value": "{{employeeId}}" }]
+        }
+      }
+    },
+    {
+      "name": "5a — Offboarding — create benefit",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"code\": \"SMOKE-HEALTH-01\",\n  \"name\": \"Mutuelle smoke\",\n  \"type\": \"HEALTH\",\n  \"description\": \"smoke test benefit\"\n}"
+        },
+        "url": "{{baseUrl}}/benefits",
+        "description": "Copier l'id retourné dans `benefitId`."
+      }
+    },
+    {
+      "name": "5b — Offboarding — enroll employee benefit",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employee\": \"{{employeeId}}\",\n  \"benefitId\": \"{{benefitId}}\",\n  \"startDate\": \"2022-01-01\"\n}"
+        },
+        "url": "{{baseUrl}}/employee_benefits"
+      }
+    },
+    {
+      "name": "5c — Offboarding — create exit process",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employee\": \"{{employeeId}}\",\n  \"reason\": \"RESIGNATION\",\n  \"departureDate\": \"2026-08-01\"\n}"
+        },
+        "url": "{{baseUrl}}/exit_processes",
+        "description": "Copier l'id retourné dans `exitProcessId`."
+      }
+    },
+    {
+      "name": "5d — Offboarding — start exit process",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"exitProcessId\": \"{{exitProcessId}}\"\n}"
+        },
+        "url": "{{baseUrl}}/exit_processes/starts",
+        "description": "Crée la checklist (5 tâches). Journey : OFFBOARDING_STARTED."
+      }
+    },
+    {
+      "name": "5e — Offboarding — list exit tasks",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": {
+          "raw": "{{baseUrl}}/exit_tasks?process={{exitProcessId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["exit_tasks"],
+          "query": [{ "key": "process", "value": "{{exitProcessId}}" }]
+        },
+        "description": "Pour chaque tâche : start puis complete (5e/5f). Le process se clôture automatiquement à la dernière tâche."
+      }
+    },
+    {
+      "name": "5f — Offboarding — start exit task",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"exitTaskId\": \"{{exitTaskId}}\"\n}"
+        },
+        "url": "{{baseUrl}}/exit_tasks/starts"
+      }
+    },
+    {
+      "name": "5g — Offboarding — complete exit task",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"exitTaskId\": \"{{exitTaskId}}\"\n}"
+        },
+        "url": "{{baseUrl}}/exit_tasks/completions",
+        "description": "Répéter start+complete pour chaque tâche. Dernière tâche → process COMPLETED, employee TERMINATED, journey ARCHIVED."
+      }
+    },
+    {
+      "name": "5h — Offboarding — employee journey",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/employees/{{employeeId}}/journey",
+        "description": "Vérifier OFFBOARDING_STARTED, TERMINATED, ARCHIVED."
+      }
+    },
+    {
+      "name": "6a — Succession — create plan",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"criticalJobRoleId\": \"{{targetJobRoleId}}\",\n  \"candidate\": \"{{employeeId}}\",\n  \"readinessLevel\": \"WITHIN_1_YEAR\",\n  \"notes\": \"smoke test succession\"\n}"
+        },
+        "url": "{{baseUrl}}/succession_plans",
+        "description": "targetJobRoleId = rôle critique (CFO, ACC-LEAD ou ACC-SR). candidate = employé actif."
+      }
+    },
+    {
+      "name": "6b — HR dashboard",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/hr/dashboard",
+        "description": "KPIs: headcount, turnover, promotions, trainings, successionCoveragePercent, criticalSkillGaps."
+      }
+    }
+  ]
+}

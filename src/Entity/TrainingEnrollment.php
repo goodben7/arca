@@ -13,17 +13,22 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use App\Doctrine\IdGenerator;
+use App\Dto\CertifyTrainingEnrollmentDto;
 use App\Dto\CompleteTrainingEnrollmentDto;
 use App\Dto\CreateTrainingEnrollmentDto;
 use App\Dto\MarkTrainingEnrollmentAbsentDto;
 use App\Dto\SetTrainingEnrollmentEnrolledDto;
+use App\Dto\StartTrainingEnrollmentDto;
 use App\Model\RessourceInterface;
 use App\Model\TrainingEnrollmentConstants;
 use App\Repository\TrainingEnrollmentRepository;
+use App\State\CertifyTrainingEnrollmentProcessor;
 use App\State\CreateTrainingEnrollmentProcessor;
 use App\State\CompleteTrainingEnrollmentProcessor;
 use App\State\MarkTrainingEnrollmentAbsentProcessor;
 use App\State\SetTrainingEnrollmentEnrolledProcessor;
+use App\State\StartTrainingEnrollmentProcessor;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -46,12 +51,26 @@ use Symfony\Component\Validator\Constraints as Assert;
             security: 'is_granted("ROLE_TRAINING_ENROLLMENT_CREATE")',
             input: CreateTrainingEnrollmentDto::class,
             processor: CreateTrainingEnrollmentProcessor::class
-        ), 
+        ),
+        new Post(
+            uriTemplate: '/training_enrollments/starts',
+            security: 'is_granted("ROLE_TRAINING_ENROLLMENT_START")',
+            input: StartTrainingEnrollmentDto::class,
+            processor: StartTrainingEnrollmentProcessor::class,
+            status: 200
+        ),
         new Post(
             uriTemplate: '/training_enrollments/completions',
             security: 'is_granted("ROLE_TRAINING_ENROLLMENT_COMPLETE")',
             input: CompleteTrainingEnrollmentDto::class,
             processor: CompleteTrainingEnrollmentProcessor::class,
+            status: 200
+        ),
+        new Post(
+            uriTemplate: '/training_enrollments/certifications',
+            security: 'is_granted("ROLE_TRAINING_ENROLLMENT_CERTIFY")',
+            input: CertifyTrainingEnrollmentDto::class,
+            processor: CertifyTrainingEnrollmentProcessor::class,
             status: 200
         ),
         new Post(
@@ -75,17 +94,20 @@ use Symfony\Component\Validator\Constraints as Assert;
     'employee' => 'exact',
     'trainingSession' => 'exact',
     'status' => 'exact',
-    'enrolledBy' => 'exact',
+    'assignedBy' => 'exact',
     'completedBy' => 'exact',
+    'certifiedBy' => 'exact',
     'absentBy' => 'exact',
 ])]
 #[ApiFilter(DateFilter::class, properties: [
     'createdAt',
-    'enrolledAt',
+    'assignedAt',
+    'startedAt',
     'completedAt',
+    'certifiedAt',
     'absentAt',
 ])]
-#[ApiFilter(OrderFilter::class, properties: ['createdAt', 'enrolledAt', 'completedAt', 'absentAt'])]
+#[ApiFilter(OrderFilter::class, properties: ['createdAt', 'assignedAt', 'startedAt', 'completedAt', 'certifiedAt', 'absentAt'])]
 class TrainingEnrollment implements RessourceInterface
 {
     public const string ID_PREFIX = 'TE';
@@ -107,19 +129,36 @@ class TrainingEnrollment implements RessourceInterface
     #[Assert\NotBlank]
     private ?string $trainingSession = null;
 
-    #[ORM\Column(name: 'TE_STATUS', length: 12)]
+    #[ORM\Column(name: 'TE_STATUS', length: 15)]
     #[Groups(['training_enrollment:get'])]
     #[Assert\Choice(callback: [TrainingEnrollmentConstants::class, 'getStatuses'])]
     #[Assert\NotBlank]
     private ?string $status = null;
 
-    #[ORM\Column(name: 'TE_ENROLLED_AT', nullable: true)]
+    #[ORM\Column(name: 'TE_SCORE', type: Types::DECIMAL, precision: 5, scale: 2, nullable: true)]
     #[Groups(['training_enrollment:get'])]
-    private ?\DateTimeImmutable $enrolledAt = null;
+    #[Assert\Range(min: 0, max: 100)]
+    private ?string $score = null;
 
-    #[ORM\Column(name: 'TE_ENROLLED_BY', length: 16, nullable: true)]
+    #[ORM\Column(name: 'TE_CERTIFICATE', length: 255, nullable: true)]
     #[Groups(['training_enrollment:get'])]
-    private ?string $enrolledBy = null;
+    private ?string $certificate = null;
+
+    #[ORM\Column(name: 'TE_ASSIGNED_AT', nullable: true)]
+    #[Groups(['training_enrollment:get'])]
+    private ?\DateTimeImmutable $assignedAt = null;
+
+    #[ORM\Column(name: 'TE_ASSIGNED_BY', length: 16, nullable: true)]
+    #[Groups(['training_enrollment:get'])]
+    private ?string $assignedBy = null;
+
+    #[ORM\Column(name: 'TE_STARTED_AT', nullable: true)]
+    #[Groups(['training_enrollment:get'])]
+    private ?\DateTimeImmutable $startedAt = null;
+
+    #[ORM\Column(name: 'TE_STARTED_BY', length: 16, nullable: true)]
+    #[Groups(['training_enrollment:get'])]
+    private ?string $startedBy = null;
 
     #[ORM\Column(name: 'TE_COMPLETED_AT', nullable: true)]
     #[Groups(['training_enrollment:get'])]
@@ -128,6 +167,14 @@ class TrainingEnrollment implements RessourceInterface
     #[ORM\Column(name: 'TE_COMPLETED_BY', length: 16, nullable: true)]
     #[Groups(['training_enrollment:get'])]
     private ?string $completedBy = null;
+
+    #[ORM\Column(name: 'TE_CERTIFIED_AT', nullable: true)]
+    #[Groups(['training_enrollment:get'])]
+    private ?\DateTimeImmutable $certifiedAt = null;
+
+    #[ORM\Column(name: 'TE_CERTIFIED_BY', length: 16, nullable: true)]
+    #[Groups(['training_enrollment:get'])]
+    private ?string $certifiedBy = null;
 
     #[ORM\Column(name: 'TE_ABSENT_AT', nullable: true)]
     #[Groups(['training_enrollment:get'])]
@@ -148,14 +195,26 @@ class TrainingEnrollment implements RessourceInterface
     public function setTrainingSession(string $trainingSession): static { $this->trainingSession = $trainingSession; return $this; }
     public function getStatus(): ?string { return $this->status; }
     public function setStatus(string $status): static { $this->status = $status; return $this; }
-    public function getEnrolledAt(): ?\DateTimeImmutable { return $this->enrolledAt; }
-    public function setEnrolledAt(?\DateTimeImmutable $enrolledAt): static { $this->enrolledAt = $enrolledAt; return $this; }
-    public function getEnrolledBy(): ?string { return $this->enrolledBy; }
-    public function setEnrolledBy(?string $enrolledBy): static { $this->enrolledBy = $enrolledBy; return $this; }
+    public function getScore(): ?string { return $this->score; }
+    public function setScore(?string $score): static { $this->score = $score; return $this; }
+    public function getCertificate(): ?string { return $this->certificate; }
+    public function setCertificate(?string $certificate): static { $this->certificate = $certificate; return $this; }
+    public function getAssignedAt(): ?\DateTimeImmutable { return $this->assignedAt; }
+    public function setAssignedAt(?\DateTimeImmutable $assignedAt): static { $this->assignedAt = $assignedAt; return $this; }
+    public function getAssignedBy(): ?string { return $this->assignedBy; }
+    public function setAssignedBy(?string $assignedBy): static { $this->assignedBy = $assignedBy; return $this; }
+    public function getStartedAt(): ?\DateTimeImmutable { return $this->startedAt; }
+    public function setStartedAt(?\DateTimeImmutable $startedAt): static { $this->startedAt = $startedAt; return $this; }
+    public function getStartedBy(): ?string { return $this->startedBy; }
+    public function setStartedBy(?string $startedBy): static { $this->startedBy = $startedBy; return $this; }
     public function getCompletedAt(): ?\DateTimeImmutable { return $this->completedAt; }
     public function setCompletedAt(?\DateTimeImmutable $completedAt): static { $this->completedAt = $completedAt; return $this; }
     public function getCompletedBy(): ?string { return $this->completedBy; }
     public function setCompletedBy(?string $completedBy): static { $this->completedBy = $completedBy; return $this; }
+    public function getCertifiedAt(): ?\DateTimeImmutable { return $this->certifiedAt; }
+    public function setCertifiedAt(?\DateTimeImmutable $certifiedAt): static { $this->certifiedAt = $certifiedAt; return $this; }
+    public function getCertifiedBy(): ?string { return $this->certifiedBy; }
+    public function setCertifiedBy(?string $certifiedBy): static { $this->certifiedBy = $certifiedBy; return $this; }
     public function getAbsentAt(): ?\DateTimeImmutable { return $this->absentAt; }
     public function setAbsentAt(?\DateTimeImmutable $absentAt): static { $this->absentAt = $absentAt; return $this; }
     public function getAbsentBy(): ?string { return $this->absentBy; }

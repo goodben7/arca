@@ -132,5 +132,20 @@ class UserManager
 
         return $user;
     }
+
+    public function lockUser(string|User $user): User
+    {
+        if (is_string($user)) {
+            $user = $this->findUser($user);
+        }
+
+        if (!$user->isLocked()) {
+            $user->setLocked(true);
+            $this->em->persist($user);
+            $this->em->flush();
+        }
+
+        return $user;
+    }
     
 }

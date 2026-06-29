@@ -27,9 +27,11 @@ class IdGenerator extends AbstractIdGenerator
      */
     private const string DATETIME_FORMAT = 'mdHis';
     
+    private const int ID_MAX_LENGTH = 16;
+
     /**
      * Generates a unique ID for an entity
-     * 
+     *
      * @param EntityManagerInterface $em The entity manager
      * @param object|null $entity The entity for which to generate an ID
      * @return mixed The generated ID
@@ -40,12 +42,19 @@ class IdGenerator extends AbstractIdGenerator
         if (!defined(get_class($entity) . '::ID_PREFIX')) {
             throw new \LogicException(sprintf('Entity %s must define an ID_PREFIX constant', get_class($entity)));
         }
-        
+
+        $prefix = $entity::ID_PREFIX;
         $currentDateTime = new \DateTime();
         $dateTimeString = $currentDateTime->format(self::DATETIME_FORMAT);
-        $randomLetters = $this->generateRandomLetters(self::DEFAULT_RANDOM_LENGTH);
-        
-        return $entity::ID_PREFIX . strtoupper($randomLetters . $dateTimeString);
+        $randomLength = self::ID_MAX_LENGTH - strlen($prefix) - strlen($dateTimeString);
+
+        if ($randomLength < 1) {
+            throw new \LogicException(sprintf('ID_PREFIX %s is too long for ID generation', $prefix));
+        }
+
+        $randomLetters = $this->generateRandomLetters($randomLength);
+
+        return $prefix.strtoupper($randomLetters.$dateTimeString);
     }
 
     /**

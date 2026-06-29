@@ -25,6 +25,7 @@ class CreateJobOfferProcessor implements ProcessorInterface
             $data->description,
             $data->department,
             $data->recruitmentRequest,
+            $data->jobRole,
         );
 
         return $this->manager->createFrom($model);

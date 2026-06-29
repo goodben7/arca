@@ -26,6 +26,7 @@ class RecruitmentRequestManager
         private Security $security,
         private QueryBusInterface $queries,
         private JobOfferManager $jobOffers,
+        private JobRoleManager $jobRoles,
     ) {
     }
 
@@ -37,11 +38,13 @@ class RecruitmentRequestManager
 
         $department = $this->findDepartment($model->department);
         $position = $this->findPosition($model->position);
+        $jobRole = $model->jobRole ? $this->jobRoles->find($model->jobRole) : null;
 
         $request = new RecruitmentRequest();
         $request
             ->setDepartment($department->getId())
             ->setPosition($position->getId())
+            ->setJobRole($jobRole)
             ->setNumberOfPositions((int) $model->numberOfPositions)
             ->setJustification($model->justification)
             ->setDescription($model->description)
@@ -83,6 +86,7 @@ class RecruitmentRequestManager
             $request->getDescription(),
             $request->getDepartment(),
             $request->getId(),
+            $request->getJobRole()?->getId(),
         ));
 
         $this->eventDispatcher->dispatch($request, ActivityEvent::ACTION_EDIT);

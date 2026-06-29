@@ -28,6 +28,12 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
+/**
+ * Slot organisationnel (poste budgétaire / effectif).
+ *
+ * Gère le headcount (`headcount`, `openPositions`) et le cycle open/close.
+ * Distinct de `JobRole` qui décrit la fiche métier dans le référentiel RH.
+ */
 #[ORM\Entity(repositoryClass: PositionRepository::class)]
 #[ORM\Table(name: '`position`')]
 #[ORM\HasLifecycleCallbacks]
