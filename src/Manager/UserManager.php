@@ -49,7 +49,7 @@ class UserManager
 
         if ($user->getPlainPassword()) {
             $user->setPassword($this->hasher->hashPassword($user, $user->getPlainPassword()));
-            $user->eraseCredentials();
+            $user->plainPassword = null;
         }
 
         $user->setCreatedAt(new \DateTimeImmutable('now'));

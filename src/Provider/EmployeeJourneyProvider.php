@@ -28,7 +28,7 @@ class EmployeeJourneyProvider implements ProviderInterface
         $employee = $this->em->find(Employee::class, $employeeId);
 
         if (null === $employee) {
-            throw new UnavailableDataException(sprintf('cannot find employee with id: %s', $employeeId));
+            throw new UnavailableDataException(\sprintf('cannot find employee with id: %s', $employeeId));
         }
 
         return $this->repository->findByEmployeeOrdered($employeeId);

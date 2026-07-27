@@ -112,6 +112,25 @@ abstract class AbstractApiTestCase extends WebTestCase
         return $employee;
     }
 
+    /**
+     * Profile required by EmployeeManager when creating an employee via API
+     * (linked user account with PERSON_EMPLOYEE).
+     */
+    protected function createEmployeePersonProfile(string $label = 'Employee functional profile'): Profile
+    {
+        $profile = (new Profile())
+            ->setLabel($label)
+            ->setPersonType(UserProxyIntertace::PERSON_EMPLOYEE)
+            ->setPermission(['ROLE_USER'])
+            ->setActive(true)
+            ->setCreatedAt(new \DateTimeImmutable());
+
+        $this->entityManager->persist($profile);
+        $this->entityManager->flush();
+
+        return $profile;
+    }
+
     protected function authenticate(string $email = 'func-admin@arca.test', string $password = 'Test1234!'): string
     {
         $this->client->request(
