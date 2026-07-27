@@ -3,10 +3,14 @@
 namespace App\Tests\Functional;
 
 use App\Entity\Employee;
+use App\Entity\Department;
+use App\Entity\Position;
 use App\Entity\Profile;
 use App\Entity\User;
 use App\Manager\UserManager;
 use App\Model\EmployeeConstants;
+use App\Model\PositionLevel;
+use App\Model\PositionStatusConstants;
 use App\Model\UserProxyIntertace;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -129,6 +133,36 @@ abstract class AbstractApiTestCase extends WebTestCase
         $this->entityManager->flush();
 
         return $profile;
+    }
+
+    protected function createDepartment(string $code = 'IT-FUNC', string $name = 'IT Functional'): Department
+    {
+        $department = (new Department())
+            ->setCode($code)
+            ->setName($name);
+
+        $this->entityManager->persist($department);
+        $this->entityManager->flush();
+
+        return $department;
+    }
+
+    protected function createOpenPosition(
+        string $departmentIdOrName,
+        string $title = 'Developer Functional',
+    ): Position {
+        $position = (new Position())
+            ->setTitle($title)
+            ->setDepartment($departmentIdOrName)
+            ->setLevel(PositionLevel::MID_LEVEL)
+            ->setHeadcount(1)
+            ->setOpenPositions(1)
+            ->setStatus(PositionStatusConstants::STATUS_OPEN);
+
+        $this->entityManager->persist($position);
+        $this->entityManager->flush();
+
+        return $position;
     }
 
     protected function authenticate(string $email = 'func-admin@arca.test', string $password = 'Test1234!'): string
