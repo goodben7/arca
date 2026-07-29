@@ -39,6 +39,8 @@ use App\Entity\EmployeeBenefit;
 use App\Entity\ExitProcess;
 use App\Entity\ExitTask;
 use App\Entity\SuccessionPlan;
+use App\Entity\SanctionScale;
+use App\Entity\DisciplinaryCase;
 use App\Entity\User;
 use App\Entity\WorkExperience;
 use App\Model\Ressource;
@@ -85,5 +87,7 @@ return static function (): iterable {
     yield Ressource::new("exit_process", ExitProcess::class, "EP", true);
     yield Ressource::new("exit_task", ExitTask::class, "XT", true);
     yield Ressource::new("succession_plan", SuccessionPlan::class, "SP", true);
+    yield Ressource::new("sanction_scale", SanctionScale::class, "SS", true);
+    yield Ressource::new("disciplinary_case", DisciplinaryCase::class, "DS", true);
 
 };

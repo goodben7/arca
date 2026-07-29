@@ -203,7 +203,10 @@ abstract class AbstractApiTestCase extends WebTestCase
             $this->client->request(
                 $method,
                 $uri,
-                server: array_merge($server, ['CONTENT_TYPE' => 'application/json']),
+                server: array_merge(
+                    ['CONTENT_TYPE' => 'application/json'],
+                    $server,
+                ),
                 content: json_encode($parameters, JSON_THROW_ON_ERROR),
             );
 

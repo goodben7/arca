@@ -112,18 +112,18 @@ class Document implements RessourceInterface
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(IdGenerator::class)]
     #[ORM\Column(length: 16, name: 'DC_ID')]
-    #[Groups(['document:get'])]
+    #[Groups(['document:get', 'disciplinary_case:get'])]
     private ?string $id = null;
 
     #[ORM\Column(length: 5, name: 'DC_TYPE')]
     #[Assert\NotNull()]
     #[Assert\NotBlank()]
     #[Assert\Choice(callback: [self::class, 'getTypeAsChoices'])]
-    #[Groups(['document:get', 'document:post'])]
+    #[Groups(['document:get', 'document:post', 'disciplinary_case:get'])]
     private ?string $type = null;
 
     #[ORM\Column(length: 255, nullable: true, name: 'DC_REF_NUMBER')]
-    #[Groups(['document:get', 'document:post'])]
+    #[Groups(['document:get', 'document:post', 'disciplinary_case:get'])]
     private ?string $documentRefNumber = null;
 
     #[ORM\Column(name: 'DC_UPLOADED_AT')]
@@ -131,7 +131,7 @@ class Document implements RessourceInterface
     private ?\DateTimeImmutable $uploadedAt = null;
 
     #[ORM\Column(length: 120, nullable: true, name: 'DC_TITLE')]
-    #[Groups(['document:get', 'document:post'])]
+    #[Groups(['document:get', 'document:post', 'disciplinary_case:get'])]
     private ?string $title = null;
 
     #[ORM\Column(nullable: true, name: 'DC_UPDATED_AT')]
@@ -156,14 +156,14 @@ class Document implements RessourceInterface
     private ?File $file = null;
 
     #[ORM\Column(length: 255, nullable: true, name: 'DC_FILE_PATH')]
-    #[Groups(['document:get'])]
+    #[Groups(['document:get', 'disciplinary_case:get'])]
     private ?string $filePath = null;
 
     #[ORM\Column(nullable: true, name: 'DC_FILE_SIZE')]
     #[Groups(['document:get'])]
     private ?int $fileSize = null;
 
-    #[Groups(['document:get'])]
+    #[Groups(['document:get', 'disciplinary_case:get'])]
     private ?string $contentUrl;
 
     #[Groups(['document:get', 'document:post'])]

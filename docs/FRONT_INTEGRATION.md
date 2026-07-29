@@ -209,6 +209,7 @@ Les opérations API vérifient `is_granted("ROLE_XXX")`. Le front doit :
 | Compensation | `ROLE_COMPENSATION_HISTORY_*` |
 | Avantages & sortie | `ROLE_BENEFIT_*`, `ROLE_EMPLOYEE_BENEFIT_*`, `ROLE_EXIT_*` |
 | Pilotage | `ROLE_SUCCESSION_PLAN_*`, `ROLE_HR_DASHBOARD_VIEW` |
+| Sanctions | `ROLE_SANCTION_SCALE_*`, `ROLE_DISCIPLINARY_CASE_*` |
 
 Liste complète : `GET /api/permissions` ou `config/permissions.php`.
 
@@ -740,7 +741,128 @@ Checklist : `config/offboarding_checklist.php`.
 
 ---
 
-### 6.17 Activité (audit)
+### 6.17 Sanctions
+
+#### 6.17.1 Échelle des sanctions (référentiel — Phase A)
+
+| Ressource | Préfixe | Description |
+|-----------|---------|-------------|
+| `sanction_scales` | SS | Niveau de sanction (`code`, `label`, `severityLevel` 1–4, `requiresHearing`, `maxDurationDays`, `active`) |
+
+```http
+GET /api/sanction_scales
+GET /api/sanction_scales?active=true&order[severityLevel]=asc
+POST /api/sanction_scales
+PATCH /api/sanction_scales/{id}
+```
+
+Rôles : `ROLE_SANCTION_SCALE_LIST|DETAILS|CREATE|UPDATE`
+
+Seed : `php bin/console app:seed:sanction-scales` → `WARN`, `BLAME`, `SUSPEND`, `DISMISS`.
+
+#### 6.17.2 Affaire disciplinaire (workflow — Phase B)
+
+| Ressource | Préfixe | Description |
+|-----------|---------|-------------|
+| `disciplinary_cases` | DS | Procédure disciplinaire (machine à états, pas de PATCH statut) |
+
+**Statuts**
+
+```
+DRAFT → OPENED → HEARING_SCHEDULED → DECISION_PENDING → SANCTION_APPLIED → CLOSED
+              ↘ CANCELLED / REJECTED
+```
+
+Si `sanctionScale.requiresHearing = false` (ex. WARN), on saute l’entretien : `OPENED → decisions`.
+
+**Routes** (POST dédiés + DTO, pattern ExitProcess)
+
+```http
+POST /api/disciplinary_cases
+POST /api/disciplinary_cases/openings
+POST /api/disciplinary_cases/hearings
+POST /api/disciplinary_cases/decisions
+POST /api/disciplinary_cases/applications
+POST /api/disciplinary_cases/cancellations
+POST /api/disciplinary_cases/rejections
+POST /api/disciplinary_cases/closures
+GET  /api/disciplinary_cases
+GET  /api/disciplinary_cases/{id}
+```
+
+Rôles : `ROLE_DISCIPLINARY_CASE_CREATE|LIST|DETAILS|OPEN|SCHEDULE_HEARING|DECIDE|APPLY|CANCEL|REJECT|CLOSE`
+
+**Création**
+
+```json
+{
+  "employee": "EM…",
+  "sanctionScale": "SS…",
+  "facts": "Faits reprochés…",
+  "occurredAt": "2026-07-01T10:00:00+00:00",
+  "reason": null
+}
+```
+
+**Transitions** (corps typique `{ "disciplinaryCaseId": "DS…" }` ; `hearings` ajoute `hearingAt` ; `decisions`/`rejections` peuvent ajouter `reason`)
+
+| Action | Depuis | Vers |
+|--------|--------|------|
+| openings | DRAFT | OPENED |
+| hearings | OPENED (si `requiresHearing`) | HEARING_SCHEDULED |
+| decisions | OPENED (sans hearing) ou HEARING_SCHEDULED | DECISION_PENDING |
+| applications | DECISION_PENDING | SANCTION_APPLIED |
+| closures | SANCTION_APPLIED | CLOSED |
+| cancellations / rejections | avant application | CANCELLED / REJECTED |
+
+**Effets transverses**
+
+- Journey : `DISCIPLINARY_STARTED` à l’ouverture, `SANCTION_APPLIED` à l’application (stage `DISCIPLINARY`)
+- Si échelle `SUSPEND` → `EmployeeManager::suspendFrom` à l’application
+- Si échelle `DISMISS` → création **et démarrage** automatique d’un `ExitProcess` (`REASON_DISMISSAL`, `departureDate` = aujourd’hui, statut `IN_PROGRESS`) ; exposé dans `exitProcess`
+- Si échelle `WARN` ou `BLAME` → création d’un `Document` `TYPE_WARNING_LETTER` (métadonnée) ; fichier optionnel via `multipart/form-data` sur `applications` (champ `file`)
+- Création refusée si une affaire active existe déjà pour l’employé (statuts non terminaux)
+
+**Apply avec lettre (multipart)**
+
+```http
+POST /api/disciplinary_cases/applications
+Content-Type: multipart/form-data
+
+disciplinaryCaseId=DS…
+file=<pdf|image>
+```
+
+Sans fichier, JSON classique reste accepté :
+
+```json
+{ "disciplinaryCaseId": "DS…" }
+```
+
+#### 6.17.3 Récidives et synthèse (Phase C)
+
+```http
+GET /api/employees/{employeeId}/disciplinary-summary
+```
+
+Rôle : `ROLE_DISCIPLINARY_CASE_LIST`
+
+Réponse (`disciplinary_summary:get`) :
+
+| Champ | Type | Description |
+|-------|------|-------------|
+| `employeeId` | string | Identifiant employé |
+| `appliedSanctionCount` | int | Nombre de sanctions appliquées (statuts `SANCTION_APPLIED` ou `CLOSED`) |
+| `maxSeverityLevel` | int? | Gravité max parmi les sanctions appliquées |
+| `lastSanctionCode` | string? | Code de la dernière échelle appliquée |
+| `lastSanctionLabel` | string? | Libellé de la dernière échelle appliquée |
+| `lastAppliedAt` | datetime? | Date d’application de la dernière sanction |
+| `hasActiveCase` | bool | Affaire disciplinaire active en cours |
+| `isRepeatOffender` | bool | `appliedSanctionCount >= 1` |
+
+---
+
+### 6.18 Activité (audit)
 
 `GET /api/activities` — journal des actions utilisateur (async via Messenger).
 
@@ -854,6 +976,8 @@ Les DTOs attendent des IDs (`employeeId`, `leaveRequestId`, `processId`, `taskId
 | EP | ExitProcess |
 | XT | ExitTask |
 | SP | SuccessionPlan |
+| SS | SanctionScale |
+| DS | DisciplinaryCase |
 | EJ | EmployeeJourneyEntry |
 
 ---

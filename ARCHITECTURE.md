@@ -607,3 +607,61 @@ php bin/console messenger:consume async -vv
 ## Évolutions en cours
 
 - `EmployeeJourneyEntry` — timeline métier branchée via Domain Events + `RecordEmployeeJourneyListener`
+
+---
+
+## Phase 11 — Module Sanctions
+
+### Phase A — Échelle des sanctions (référentiel)
+
+| Concept | Préfixe | Rôle |
+|---------|---------|------|
+| **SanctionScale** | SS | Catalogue disciplinaire (`code`, `label`, `severityLevel`, `requiresHearing`, `maxDurationDays`, `active`) |
+
+Codes seedés : `WARN` (1), `BLAME` (2), `SUSPEND` (3), `DISMISS` (4).
+
+API :
+
+- `GET/POST/PATCH /api/sanction_scales`
+- Permissions : `ROLE_SANCTION_SCALE_*`
+- Seed : `php bin/console app:seed:sanction-scales`
+- Migration : `Version20260729120000`
+
+### Phase B — Affaire disciplinaire (workflow)
+
+| Concept | Préfixe | Rôle |
+|---------|---------|------|
+| **DisciplinaryCase** | DS | Procédure disciplinaire (machine à états, POST dédiés) |
+
+Statuts : `DRAFT` → `OPENED` → `HEARING_SCHEDULED` → `DECISION_PENDING` → `SANCTION_APPLIED` → `CLOSED` (↘ `CANCELLED` / `REJECTED`).
+
+Si `requiresHearing=false`, skip hearing : `OPENED` → decide.
+
+API :
+
+- `POST /api/disciplinary_cases` (+ openings, hearings, decisions, applications, cancellations, rejections, closures)
+- Permissions : `ROLE_DISCIPLINARY_CASE_*`
+- Journey : `DISCIPLINARY_STARTED`, `SANCTION_APPLIED` (stage `DISCIPLINARY`)
+- Effet : code `SUSPEND` → suspension employé à l’application
+- Migration : `Version20260729140000`
+
+### Phase C — Effets d’application et récidives
+
+| Concept | Rôle |
+|---------|------|
+| **Document** (WARN/BLAME) | Métadonnée `TYPE_WARNING_LETTER` liée à l’affaire (`DS_DOCUMENT`) |
+| **ExitProcess** (DISMISS) | Process de sortie `REASON_DISMISSAL` créé à l’application (`DS_EXIT_PROCESS`) |
+| **DisciplinarySummaryResult** | Synthèse récidives par employé |
+
+Effets à l’application (`applications`) :
+
+- `WARN` / `BLAME` → `Document` `TYPE_WARNING_LETTER` (fichier optionnel via multipart `file`)
+- `SUSPEND` → suspension employé (Phase B)
+- `DISMISS` → `ExitProcess` créé **et démarré** (`IN_PROGRESS`, checklist offboarding)
+
+Règles :
+
+- Création refusée si affaire active existante pour l’employé
+- `GET /api/employees/{employeeId}/disciplinary-summary` — compteur sanctions, gravité max, dernière sanction, `hasActiveCase`, `isRepeatOffender`
+
+Migration : `Version20260729160000`

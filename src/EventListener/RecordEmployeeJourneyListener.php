@@ -11,6 +11,8 @@ use App\Event\Domain\EmployeeSkillLevelUpgradedEvent;
 use App\Event\Domain\EmployeeSkillValidatedEvent;
 use App\Event\Domain\EmployeeRetiredEvent;
 use App\Event\Domain\EmployeeTerminatedEvent;
+use App\Event\Domain\DisciplinaryCaseOpenedEvent;
+use App\Event\Domain\DisciplinarySanctionAppliedEvent;
 use App\Event\Domain\ExitProcessCompletedEvent;
 use App\Event\Domain\ExitProcessStartedEvent;
 use App\Event\Domain\LeaveRequestApprovedEvent;
@@ -41,6 +43,8 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 #[AsEventListener(event: MobilityImplementedEvent::class, method: 'onMobilityImplemented')]
 #[AsEventListener(event: ExitProcessStartedEvent::class, method: 'onExitProcessStarted')]
 #[AsEventListener(event: ExitProcessCompletedEvent::class, method: 'onExitProcessCompleted')]
+#[AsEventListener(event: DisciplinaryCaseOpenedEvent::class, method: 'onDisciplinaryCaseOpened')]
+#[AsEventListener(event: DisciplinarySanctionAppliedEvent::class, method: 'onDisciplinarySanctionApplied')]
 class RecordEmployeeJourneyListener
 {
     public function __construct(
@@ -394,6 +398,46 @@ class RecordEmployeeJourneyListener
                 'departureDate' => $process->getDepartureDate()?->format('Y-m-d'),
             ],
             description: 'employee archived after exit process',
+            actorId: $event->getActorId(),
+            occurredAt: $event->getOccurredAt(),
+        );
+    }
+
+    public function onDisciplinaryCaseOpened(DisciplinaryCaseOpenedEvent $event): void
+    {
+        $case = $event->getCase();
+
+        $this->journeyRecorder->record(
+            employee: (string) $case->getEmployee(),
+            stage: JourneyStageConstants::DISCIPLINARY,
+            eventType: JourneyEventTypeConstants::DISCIPLINARY_STARTED,
+            sourceEntityType: EntityType::DISCIPLINARY_CASE,
+            sourceEntityId: $case->getId(),
+            metadata: [
+                'sanctionScale' => $case->getSanctionScale()?->getCode(),
+                'status' => $case->getStatus(),
+            ],
+            description: 'disciplinary case opened',
+            actorId: $event->getActorId(),
+            occurredAt: $event->getOccurredAt(),
+        );
+    }
+
+    public function onDisciplinarySanctionApplied(DisciplinarySanctionAppliedEvent $event): void
+    {
+        $case = $event->getCase();
+
+        $this->journeyRecorder->record(
+            employee: (string) $case->getEmployee(),
+            stage: JourneyStageConstants::DISCIPLINARY,
+            eventType: JourneyEventTypeConstants::SANCTION_APPLIED,
+            sourceEntityType: EntityType::DISCIPLINARY_CASE,
+            sourceEntityId: $case->getId(),
+            metadata: [
+                'sanctionScale' => $case->getSanctionScale()?->getCode(),
+                'status' => $case->getStatus(),
+            ],
+            description: 'disciplinary sanction applied',
             actorId: $event->getActorId(),
             occurredAt: $event->getOccurredAt(),
         );

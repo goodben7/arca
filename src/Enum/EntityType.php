@@ -45,8 +45,8 @@ class EntityType
     public const string EXIT_PROCESS = 'EXIT_PROCESS'; // Processus de sortie
     public const string EXIT_TASK = 'EXIT_TASK'; // Tâche de sortie
     public const string SUCCESSION_PLAN = 'SUCCESSION_PLAN'; // Plan de succession
-
-
+    public const string SANCTION_SCALE = 'SANCTION_SCALE'; // Niveau d'échelle des sanctions
+    public const string DISCIPLINARY_CASE = 'DISCIPLINARY_CASE'; // Affaire disciplinaire
 
     public static function getAll(): array
     {
@@ -98,6 +98,8 @@ class EntityType
                 self::EXIT_PROCESS,
                 self::EXIT_TASK,
                 self::SUCCESSION_PLAN,
+                self::SANCTION_SCALE,
+                self::DISCIPLINARY_CASE,
             ]
         ];
     }

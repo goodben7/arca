@@ -87,7 +87,7 @@ class ExitProcess implements RessourceInterface
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(IdGenerator::class)]
     #[ORM\Column(name: 'EP_ID', length: 16)]
-    #[Groups(['exit_process:get', 'exit_task:get'])]
+    #[Groups(['exit_process:get', 'exit_task:get', 'disciplinary_case:get'])]
     private ?string $id = null;
 
     #[ORM\Column(name: 'EP_EMPLOYEE', length: 16)]
@@ -96,7 +96,7 @@ class ExitProcess implements RessourceInterface
     private ?string $employee = null;
 
     #[ORM\Column(name: 'EP_REASON', length: 20)]
-    #[Groups(['exit_process:get'])]
+    #[Groups(['exit_process:get', 'disciplinary_case:get'])]
     #[Assert\Choice(callback: [ExitProcessConstants::class, 'getReasons'])]
     #[Assert\NotBlank]
     private ?string $reason = null;
@@ -107,7 +107,7 @@ class ExitProcess implements RessourceInterface
     private ?\DateTimeImmutable $departureDate = null;
 
     #[ORM\Column(name: 'EP_STATUS', length: 15)]
-    #[Groups(['exit_process:get'])]
+    #[Groups(['exit_process:get', 'disciplinary_case:get'])]
     #[Assert\Choice(callback: [ExitProcessConstants::class, 'getStatuses'])]
     private ?string $status = null;
 

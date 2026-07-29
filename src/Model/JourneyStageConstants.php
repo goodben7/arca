@@ -14,6 +14,7 @@ class JourneyStageConstants
     public const string OFFBOARDING = 'OFFBOARDING';
     public const string RETIREMENT = 'RETIREMENT';
     public const string ARCHIVED = 'ARCHIVED';
+    public const string DISCIPLINARY = 'DISCIPLINARY';
 
     public static function getStages(): array
     {
@@ -28,6 +29,7 @@ class JourneyStageConstants
             self::OFFBOARDING,
             self::RETIREMENT,
             self::ARCHIVED,
+            self::DISCIPLINARY,
         ];
     }
 }

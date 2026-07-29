@@ -29,6 +29,8 @@ class JourneyEventTypeConstants
     public const string ONBOARDING_COMPLETED = 'ONBOARDING_COMPLETED';
     public const string OFFBOARDING_STARTED = 'OFFBOARDING_STARTED';
     public const string ARCHIVED = 'ARCHIVED';
+    public const string DISCIPLINARY_STARTED = 'DISCIPLINARY_STARTED';
+    public const string SANCTION_APPLIED = 'SANCTION_APPLIED';
 
     public static function getEventTypes(): array
     {
@@ -58,6 +60,8 @@ class JourneyEventTypeConstants
             self::ONBOARDING_COMPLETED,
             self::OFFBOARDING_STARTED,
             self::ARCHIVED,
+            self::DISCIPLINARY_STARTED,
+            self::SANCTION_APPLIED,
         ];
     }
 }

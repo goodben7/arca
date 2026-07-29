@@ -252,6 +252,22 @@ return static function (): iterable {
     yield Permission::new('ROLE_SUCCESSION_PLAN_DETAILS', "Consulter le détail d'un plan de succession");
     yield Permission::new('ROLE_SUCCESSION_PLAN_UPDATE', "Modifier un plan de succession");
 
+    yield Permission::new('ROLE_SANCTION_SCALE_CREATE', "Créer un niveau d'échelle des sanctions");
+    yield Permission::new('ROLE_SANCTION_SCALE_LIST', "Consulter l'échelle des sanctions");
+    yield Permission::new('ROLE_SANCTION_SCALE_DETAILS', "Consulter le détail d'un niveau de sanction");
+    yield Permission::new('ROLE_SANCTION_SCALE_UPDATE', "Modifier un niveau d'échelle des sanctions");
+
+    yield Permission::new('ROLE_DISCIPLINARY_CASE_CREATE', "Créer une affaire disciplinaire");
+    yield Permission::new('ROLE_DISCIPLINARY_CASE_LIST', "Consulter les affaires disciplinaires");
+    yield Permission::new('ROLE_DISCIPLINARY_CASE_DETAILS', "Consulter le détail d'une affaire disciplinaire");
+    yield Permission::new('ROLE_DISCIPLINARY_CASE_OPEN', "Ouvrir une affaire disciplinaire");
+    yield Permission::new('ROLE_DISCIPLINARY_CASE_SCHEDULE_HEARING', "Planifier une audience disciplinaire");
+    yield Permission::new('ROLE_DISCIPLINARY_CASE_DECIDE', "Décider d'une affaire disciplinaire");
+    yield Permission::new('ROLE_DISCIPLINARY_CASE_APPLY', "Appliquer une sanction disciplinaire");
+    yield Permission::new('ROLE_DISCIPLINARY_CASE_CANCEL', "Annuler une affaire disciplinaire");
+    yield Permission::new('ROLE_DISCIPLINARY_CASE_REJECT', "Rejeter une affaire disciplinaire");
+    yield Permission::new('ROLE_DISCIPLINARY_CASE_CLOSE', "Clôturer une affaire disciplinaire");
+
     yield Permission::new('ROLE_HR_DASHBOARD_VIEW', "Consulter le tableau de bord RH");
 
 };
