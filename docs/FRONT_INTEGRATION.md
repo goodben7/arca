@@ -357,9 +357,86 @@ Phase I — Pilotage
 | `/api/employees/on_leaves` | `ROLE_EMPLOYEE_SET_ON_LEAVE` | → ON_LEAVE |
 | `/api/employees/suspensions` | `ROLE_EMPLOYEE_SUSPEND` | → SUSPENDED |
 | `/api/employees/terminations` | `ROLE_EMPLOYEE_TERMINATE` | → TERMINATED |
-| `/api/employees/retirements` | `ROLE_EMPLOYEE_RETIRE` | → RETIRED |
+| `/api/employees/retirements` | `ROLE_EMPLOYEE_RETIRE` | → RETIRED (voir §6.2.1) |
 | `/api/employees/probations` | `ROLE_EMPLOYEE_SET_PROBATION` | → PROBATION |
 | `/api/employees/assign-manager` | `ROLE_EMPLOYEE_ASSIGN_MANAGER` | managerId |
+
+#### 6.2.1 Retraite (éligibilité + action)
+
+**Règle métier :** un employé peut partir à la retraite si **âge ≥ 65 ans** **OU** **ancienneté entreprise ≥ 35 ans**.
+
+- `birthDate` peut être manquant → seule la règle d’ancienneté (`hireDate`) s’applique
+- `hireDate` est obligatoire côté modèle
+
+**Pré-check (recommandé avant d’afficher le bouton) :**
+
+```http
+GET /api/employees/{employeeId}/retirement-eligibility
+Authorization: Bearer <token>
+```
+
+Rôle : `ROLE_EMPLOYEE_RETIRE`
+
+Réponse :
+
+```json
+{
+  "employeeId": "EMxxx",
+  "eligible": false,
+  "reasons": [
+    "age requires >= 780 months",
+    "tenure requires >= 420 months",
+    "retirement requires age >= 65 years OR career >= 35 years"
+  ]
+}
+```
+
+ou si OK :
+
+```json
+{
+  "employeeId": "EMxxx",
+  "eligible": true,
+  "reasons": []
+}
+```
+
+**Action de retraite :**
+
+```http
+POST /api/employees/retirements
+Content-Type: application/json
+
+{ "employeeId": "EMxxx" }
+```
+
+- **200** → employé `status: RETIRED` (+ `retiredAt`, `retiredBy`, `departureDate`)
+- **400** → non éligible (mêmes raisons que le pré-check)
+- **403** → rôle manquant
+
+**UI recommandée :**
+
+1. Sur la fiche employé, appeler `GET .../retirement-eligibility`
+2. Si `eligible === false` → bouton désactivé + tooltip avec `reasons`
+3. Si `eligible === true` → confirmation puis `POST .../retirements`
+4. Rafraîchir `GET /employees/{id}` et `GET /employees/{id}/journey`
+
+**Journey après retraite :**
+
+```http
+GET /api/employees/{employeeId}/journey?order[occurredAt]=desc
+```
+
+Nouvelle entrée :
+
+| Champ | Valeur |
+|-------|--------|
+| `stage` | `RETIREMENT` |
+| `eventType` | `RETIRED` |
+| `description` | `employee retired` |
+
+> Différence avec offboarding : `POST /employees/retirements` = transition immédiate de statut.  
+> Le process `ExitProcess` avec motif `RETIREMENT` reste le parcours checklist complet (fin contrat, lock user, etc.).
 
 **Filtres :** `id`, `employeeNumber`, `email`, `status`, `jobRole`, `grade`, …
 
@@ -683,8 +760,8 @@ Chaque entrée :
 
 | Champ | Description |
 |-------|-------------|
-| `stage` | `HIRED`, `ONBOARDING`, `ACTIVE`, `OFFBOARDING`, `ARCHIVED`, … |
-| `eventType` | `CREATED`, `PROMOTED`, `SKILL_VALIDATED`, `ONBOARDING_COMPLETED`, … |
+| `stage` | `ONBOARDING`, `ACTIVE`, `PROMOTION`, `TRANSFER`, `OFFBOARDING`, `RETIREMENT`, `ARCHIVED`, … |
+| `eventType` | `CREATED`, `PROMOTED`, `SKILL_VALIDATED`, `ONBOARDING_COMPLETED`, `RETIRED`, … |
 | `sourceEntityType` / `sourceEntityId` | Lien vers la ressource source |
 | `metadata` | JSON contextuel |
 | `occurredAt` | Horodatage |

@@ -20,6 +20,7 @@ use App\Event\Domain\ApplicationHiredEvent;
 use App\Event\Domain\ContractActivatedEvent;
 use App\Event\Domain\EmployeeActivatedEvent;
 use App\Event\Domain\EmployeeCreatedEvent;
+use App\Event\Domain\EmployeeRetiredEvent;
 use App\Event\Domain\EmployeeSkillValidatedEvent;
 use App\Event\Domain\EmployeeTerminatedEvent;
 use App\Event\Domain\LeaveRequestApprovedEvent;
@@ -243,6 +244,28 @@ class RecordEmployeeJourneyListenerTest extends ManagerTestCase
             );
 
         $this->listener->onEmployeeTerminated(new EmployeeTerminatedEvent($employee, 'SYSTEM'));
+    }
+
+    public function testOnEmployeeRetiredRecordsRetirementStage(): void
+    {
+        $employee = $this->createEmployee('EMTEST001', EmployeeConstants::STATUS_RETIRED);
+
+        $this->journeyRecorder
+            ->expects($this->once())
+            ->method('record')
+            ->with(
+                $employee,
+                JourneyStageConstants::RETIREMENT,
+                JourneyEventTypeConstants::RETIRED,
+                EntityType::EMPLOYEE,
+                'EMTEST001',
+                null,
+                'employee retired',
+                'SYSTEM',
+                $this->isInstanceOf(\DateTimeImmutable::class),
+            );
+
+        $this->listener->onEmployeeRetired(new EmployeeRetiredEvent($employee, 'SYSTEM'));
     }
 
     public function testOnEmployeeSkillValidatedRecordsTrainingStage(): void

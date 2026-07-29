@@ -9,6 +9,7 @@ use App\Event\Domain\EmployeeActivatedEvent;
 use App\Event\Domain\EmployeeCreatedEvent;
 use App\Event\Domain\EmployeeSkillLevelUpgradedEvent;
 use App\Event\Domain\EmployeeSkillValidatedEvent;
+use App\Event\Domain\EmployeeRetiredEvent;
 use App\Event\Domain\EmployeeTerminatedEvent;
 use App\Event\Domain\ExitProcessCompletedEvent;
 use App\Event\Domain\ExitProcessStartedEvent;
@@ -27,6 +28,7 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 #[AsEventListener(event: EmployeeCreatedEvent::class, method: 'onEmployeeCreated')]
 #[AsEventListener(event: EmployeeActivatedEvent::class, method: 'onEmployeeActivated')]
 #[AsEventListener(event: EmployeeTerminatedEvent::class, method: 'onEmployeeTerminated')]
+#[AsEventListener(event: EmployeeRetiredEvent::class, method: 'onEmployeeRetired')]
 #[AsEventListener(event: ApplicationHiredEvent::class, method: 'onApplicationHired')]
 #[AsEventListener(event: ContractActivatedEvent::class, method: 'onContractActivated')]
 #[AsEventListener(event: LeaveRequestApprovedEvent::class, method: 'onLeaveRequestApproved')]
@@ -121,6 +123,22 @@ class RecordEmployeeJourneyListener
             sourceEntityType: EntityType::EMPLOYEE,
             sourceEntityId: $employee->getId(),
             description: 'employee terminated',
+            actorId: $event->getActorId(),
+            occurredAt: $event->getOccurredAt(),
+        );
+    }
+
+    public function onEmployeeRetired(EmployeeRetiredEvent $event): void
+    {
+        $employee = $event->getEmployee();
+
+        $this->journeyRecorder->record(
+            employee: $employee,
+            stage: JourneyStageConstants::RETIREMENT,
+            eventType: JourneyEventTypeConstants::RETIRED,
+            sourceEntityType: EntityType::EMPLOYEE,
+            sourceEntityId: $employee->getId(),
+            description: 'employee retired',
             actorId: $event->getActorId(),
             occurredAt: $event->getOccurredAt(),
         );

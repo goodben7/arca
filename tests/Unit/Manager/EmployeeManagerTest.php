@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Enum\EntityType;
 use App\Event\Domain\EmployeeActivatedEvent;
 use App\Event\Domain\EmployeeCreatedEvent;
+use App\Event\Domain\EmployeeRetiredEvent;
 use App\Event\Domain\EmployeeTerminatedEvent;
 use App\Exception\InvalidActionInputException;
 use App\Manager\EmployeeManager;
@@ -22,7 +23,9 @@ use App\Model\DeactivateEmployeeModel;
 use App\Model\EmployeeConstants;
 use App\Model\NewEmployeeModel;
 use App\Model\PutEmployeeOnLeaveModel;
+use App\Policy\PolicyEvaluator;
 use App\Model\TerminateEmployeeModel;
+use App\Model\RetireEmployeeModel;
 use App\Model\UserProxyIntertace;
 use App\Repository\ProfileRepository;
 use App\Service\ActivityEventDispatcher;
@@ -42,6 +45,7 @@ class EmployeeManagerTest extends ManagerTestCase
     private EventDispatcherInterface&MockObject $domainEventDispatcher;
     private JobRoleManager&MockObject $jobRoles;
     private GradeManager&MockObject $grades;
+    private PolicyEvaluator&MockObject $policyEvaluator;
     private EmployeeManager $manager;
 
     protected function setUp(): void
@@ -55,6 +59,7 @@ class EmployeeManagerTest extends ManagerTestCase
         $this->domainEventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $this->jobRoles = $this->createMock(JobRoleManager::class);
         $this->grades = $this->createMock(GradeManager::class);
+        $this->policyEvaluator = $this->createMock(PolicyEvaluator::class);
 
         $this->security->method('getUser')->willReturn(null);
 
@@ -68,6 +73,7 @@ class EmployeeManagerTest extends ManagerTestCase
             $this->domainEventDispatcher,
             $this->jobRoles,
             $this->grades,
+            $this->policyEvaluator,
         );
     }
 
@@ -192,6 +198,68 @@ class EmployeeManagerTest extends ManagerTestCase
         self::assertSame(EmployeeConstants::STATUS_TERMINATED, $result->getStatus());
         self::assertNotNull($result->getTerminatedAt());
         self::assertNotNull($result->getDepartureDate());
+    }
+
+    public function testRetireFromAllowsWhenAgeIsAtLeast65Years(): void
+    {
+        $employee = $this->createEmployee('EMTEST001', EmployeeConstants::STATUS_ACTIVE);
+        $employee->setBirthDate((new \DateTimeImmutable())->modify('-70 years'));
+        $employee->setHireDate((new \DateTimeImmutable())->modify('-10 years'));
+
+        $this->em->method('find')->willReturn($employee);
+        $this->em->expects($this->once())->method('flush');
+        $this->eventDispatcher->expects($this->once())->method('dispatch');
+        $this->domainEventDispatcher
+            ->expects($this->once())
+            ->method('dispatch')
+            ->with($this->isInstanceOf(EmployeeRetiredEvent::class));
+        $this->policyEvaluator->method('evaluate')->willReturn(\App\Policy\PolicyResult::eligible());
+
+        $result = $this->manager->retireFrom(new RetireEmployeeModel('EMTEST001'));
+
+        self::assertSame(EmployeeConstants::STATUS_RETIRED, $result->getStatus());
+        self::assertNotNull($result->getRetiredAt());
+        self::assertSame('SYSTEM', $result->getRetiredBy());
+        self::assertNotNull($result->getDepartureDate());
+    }
+
+    public function testRetireFromAllowsWhenCareerIsAtLeast35YearsEvenIfBirthDateMissing(): void
+    {
+        $employee = $this->createEmployee('EMTEST001', EmployeeConstants::STATUS_ACTIVE);
+        $employee->setHireDate((new \DateTimeImmutable())->modify('-40 years'));
+        // birthDate intentionally left null
+
+        $this->em->method('find')->willReturn($employee);
+        $this->em->expects($this->once())->method('flush');
+        $this->eventDispatcher->expects($this->once())->method('dispatch');
+        $this->domainEventDispatcher
+            ->expects($this->once())
+            ->method('dispatch')
+            ->with($this->isInstanceOf(EmployeeRetiredEvent::class));
+        $this->policyEvaluator->method('evaluate')->willReturn(\App\Policy\PolicyResult::eligible());
+
+        $result = $this->manager->retireFrom(new RetireEmployeeModel('EMTEST001'));
+
+        self::assertSame(EmployeeConstants::STATUS_RETIRED, $result->getStatus());
+        self::assertNotNull($result->getRetiredAt());
+    }
+
+    public function testRetireFromThrowsWhenNotEligibleByAgeOrTenure(): void
+    {
+        $employee = $this->createEmployee('EMTEST001', EmployeeConstants::STATUS_ACTIVE);
+        $employee->setBirthDate((new \DateTimeImmutable())->modify('-50 years'));
+        $employee->setHireDate((new \DateTimeImmutable())->modify('-10 years'));
+
+        $this->em->method('find')->willReturn($employee);
+        $this->em->expects($this->never())->method('flush');
+        $this->policyEvaluator->method('evaluate')->willReturn(
+            \App\Policy\PolicyResult::notEligible(['retirement requires age >= 65 years OR career >= 35 years'])
+        );
+
+        $this->expectException(InvalidActionInputException::class);
+        $this->expectExceptionMessage('retirement requires age >= 65 years OR career >= 35 years');
+
+        $this->manager->retireFrom(new RetireEmployeeModel('EMTEST001'));
     }
 
     public function testActivateFromThrowsWhenEmployeeIsTerminated(): void

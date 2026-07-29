@@ -8,6 +8,7 @@ use App\Enum\EntityType;
 use App\Event\ActivityEvent;
 use App\Event\Domain\EmployeeActivatedEvent;
 use App\Event\Domain\EmployeeCreatedEvent;
+use App\Event\Domain\EmployeeRetiredEvent;
 use App\Event\Domain\EmployeeTerminatedEvent;
 use App\Exception\InvalidActionInputException;
 use App\Exception\UnavailableDataException;
@@ -17,6 +18,7 @@ use App\Message\Query\GetUserDetails;
 use App\Message\Query\QueryBusInterface;
 use App\Model\ActivateEmployeeModel;
 use App\Model\AssignManagerEmployeeModel;
+use App\Model\EligibilityActionConstants;
 use App\Model\DeactivateEmployeeModel;
 use App\Model\EmployeeConstants;
 use App\Model\NewEmployeeModel;
@@ -27,6 +29,7 @@ use App\Model\SuspendEmployeeModel;
 use App\Model\TerminateEmployeeModel;
 use App\Model\UserProxyIntertace;
 use App\Repository\ProfileRepository;
+use App\Policy\PolicyEvaluator;
 use App\Service\ActivityEventDispatcher;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -44,6 +47,7 @@ class EmployeeManager
         private EventDispatcherInterface $domainEventDispatcher,
         private JobRoleManager $jobRoles,
         private GradeManager $grades,
+        private PolicyEvaluator $policyEvaluator,
     ) {
     }
 
@@ -236,10 +240,22 @@ class EmployeeManager
         $employee = $this->findEmployee($model->employeeId);
 
         $this->assertActionAllowed($employee, EmployeeConstants::ACTION_RETIRE);
+        $eligibility = $this->policyEvaluator->evaluate(
+            EligibilityActionConstants::RETIREMENT,
+            $employee,
+        );
+        if (!$eligibility->isEligible()) {
+            throw new InvalidActionInputException(implode(' | ', $eligibility->getReasons()));
+        }
+
         $this->applyEmployeeAction($employee, EmployeeConstants::ACTION_RETIRE);
         $this->em->flush();
 
         $this->eventDispatcher->dispatch($employee, ActivityEvent::ACTION_EDIT, null, 'employee retired');
+
+        $this->domainEventDispatcher->dispatch(
+            new EmployeeRetiredEvent($employee, $this->resolveActorId())
+        );
 
         return $employee;
     }
