@@ -22,6 +22,8 @@ services:
       APP_DEBUG: ${APP_DEBUG:-1}
       SERVER_NAME: ":80"
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-1}
+      # Disable FrankenPHP worker mode for simpler reverse-proxy setups
+      FRANKENPHP_CONFIG: ""
     volumes:
       - .:/app
       - arca_vendor:/app/vendor
