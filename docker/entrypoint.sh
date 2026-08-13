@@ -3,7 +3,8 @@ set -e
 
 cd /app
 
-if [ ! -d vendor ]; then
+# Named volume /app/vendor always exists as a directory — check autoload, not the folder.
+if [ ! -f vendor/autoload.php ]; then
   echo "📦 composer install..."
   composer install --prefer-dist --no-progress --no-interaction
 fi
