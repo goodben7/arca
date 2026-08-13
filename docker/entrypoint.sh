@@ -19,7 +19,7 @@ fi
 if [ "${RUN_MIGRATIONS:-1}" = "1" ]; then
   echo "⚙️  Waiting for database..."
   ATTEMPTS=30
-  until php bin/console doctrine:query:sql "SELECT 1" >/dev/null 2>&1 || [ "$ATTEMPTS" -eq 0 ]; do
+  until php bin/console dbal:run-sql "SELECT 1" >/dev/null 2>&1 || [ "$ATTEMPTS" -eq 0 ]; do
     ATTEMPTS=$((ATTEMPTS - 1))
     sleep 2
   done
