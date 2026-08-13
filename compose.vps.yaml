@@ -1,0 +1,104 @@
+# Stack VPS (dev) — derrière Nginx hôte sur 80/443
+# Usage:
+#   docker compose -f compose.vps.yaml --env-file .env.vps up -d --build
+#
+# Ports hôte (évite 80/443/8080/3307 déjà pris) :
+#   API  → 127.0.0.1:8081
+#   MySQL → 127.0.0.1:3308 (admin local uniquement)
+#   Mailpit UI → 127.0.0.1:8026
+
+name: arca
+
+services:
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env.vps
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      APP_DEBUG: ${APP_DEBUG:-1}
+      SERVER_NAME: ":80"
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-1}
+    volumes:
+      - .:/app
+      - arca_vendor:/app/vendor
+      - arca_var:/app/var
+    ports:
+      - "127.0.0.1:8081:80"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - arca
+
+  messenger:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env.vps
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      APP_DEBUG: ${APP_DEBUG:-1}
+      RUN_MIGRATIONS: "0"
+    volumes:
+      - .:/app
+      - arca_vendor:/app/vendor
+      - arca_var:/app/var
+    command: ["php", "bin/console", "messenger:consume", "async", "-vv", "--time-limit=3600", "--memory-limit=256M"]
+    depends_on:
+      database:
+        condition: service_healthy
+      php:
+        condition: service_started
+    networks:
+      - arca
+
+  database:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-arca}
+      MYSQL_USER: ${MYSQL_USER:-arca}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme_root}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=caching_sha2_password
+    volumes:
+      - arca_db:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3308:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-changeme_root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - arca
+
+  mailer:
+    image: axllent/mailpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8026:8025"
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    networks:
+      - arca
+
+volumes:
+  arca_db:
+  arca_vendor:
+  arca_var:
+
+networks:
+  arca:
+    driver: bridge
