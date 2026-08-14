@@ -42,6 +42,14 @@ chmod 600 ~/.ssh/authorized_keys
 
 **Dans GitHub :** secret `VPS_SSH_KEY` = contenu **intégral** de `~/.ssh/arca_gha` (le privé, y compris `BEGIN/END`).
 
+Vérifie en local avant de relancer Actions :
+
+```bash
+ssh -i ~/.ssh/arca_gha -o IdentitiesOnly=yes digis@141.136.42.36 'whoami && hostname'
+```
+
+Doit afficher `digis`. Si ça échoue, la clé n’est pas dans `authorized_keys`.
+
 Le VPS continue d’utiliser **sa propre** clé pour `git pull` vers GitHub (déjà configurée).
 
 ---
@@ -53,3 +61,22 @@ Le VPS continue d’utiliser **sa propre** clé pour `git pull` vers GitHub (dé
 3. Un push sur `main` vert déclenche le deploy.
 
 Déploiement manuel : Actions → CI / CD → **Run workflow** (branche `main`).
+
+---
+
+## 3. Erreur `ssh: unable to authenticate`
+
+Causes fréquentes :
+
+1. **Clé publique absente sur le VPS** — colle `arca_gha.pub` dans `/home/digis/.ssh/authorized_keys` (user `digis`, pas root).
+2. **Mauvais secret** — `VPS_SSH_KEY` doit être la clé **privée** (`arca_gha`), pas `.pub`.
+3. **Sauts de ligne perdus** — recopie le fichier entier :
+
+```bash
+# macOS
+pbcopy < ~/.ssh/arca_gha
+```
+
+Le secret doit commencer par `-----BEGIN OPENSSH PRIVATE KEY-----` et finir par `-----END OPENSSH PRIVATE KEY-----` (plusieurs lignes).
+4. **Passphrase** — la clé a été créée avec `-N ""` (vide). Si tu as mis une passphrase, GitHub ne pourra pas l’utiliser (sauf secret `passphrase`).
+
