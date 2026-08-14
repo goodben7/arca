@@ -109,3 +109,9 @@ Rien n’est exposé publiquement hors Nginx.
 - `deploy-vps.sh`
 
 > Note : le `compose.yaml` Symfony Flex (PostgreSQL) reste pour le local Flex ; le VPS utilise **MySQL 8**, aligné avec les migrations actuelles.
+
+---
+
+## 6. CI / CD
+
+Voir [`docs/CI_CD.md`](CI_CD.md) — GitHub Actions (tests + deploy SSH).

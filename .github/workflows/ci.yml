@@ -1,0 +1,76 @@
+name: CI / CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  APP_ENV: test
+  COMPOSER_NO_INTERACTION: 1
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, intl, zip, pdo_sqlite, xml, ctype, iconv, gd
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: JWT keypair
+        run: php bin/console lexik:jwt:generate-keypair --skip-if-exists --no-interaction
+
+      - name: PHPUnit
+        run: ./vendor/bin/phpunit
+
+  deploy:
+    name: Deploy VPS
+    needs: test
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd "${{ secrets.VPS_PATH }}"
+            git fetch origin main
+            git checkout main
+            git pull --ff-only origin main
+            chmod +x deploy-vps.sh docker/entrypoint.sh
+            docker compose -f compose.vps.yaml --env-file .env.vps up -d --build --remove-orphans
+            sleep 12
+            docker compose -f compose.vps.yaml --env-file .env.vps exec -T php \
+              php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+            curl -fsS -o /dev/null -w "health:%{http_code}\n" https://api.arca.digisafrica.tech/api
