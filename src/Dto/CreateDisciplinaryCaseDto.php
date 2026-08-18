@@ -21,4 +21,6 @@ class CreateDisciplinaryCaseDto
     public \DateTimeInterface $occurredAt;
 
     public ?string $reason = null;
+
+    public bool $acknowledgeRecidivism = false;
 }

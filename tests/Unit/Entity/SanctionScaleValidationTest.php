@@ -23,10 +23,24 @@ class SanctionScaleValidationTest extends TestCase
     {
         $scale = (new SanctionScale())
             ->setCode(SanctionScaleConstants::CODE_SUSPEND)
-            ->setLabel('Mise à pied')
-            ->setSeverityLevel(3)
+            ->setLabel('Mise à pied disciplinaire')
+            ->setSeverityLevel(4)
             ->setRequiresHearing(true)
             ->setMaxDurationDays(8)
+            ->setActive(true);
+
+        $violations = $this->validator->validate($scale);
+
+        self::assertCount(0, $violations);
+    }
+
+    public function testSeverityLevelFiveIsAllowedForDismiss(): void
+    {
+        $scale = (new SanctionScale())
+            ->setCode(SanctionScaleConstants::CODE_DISMISS)
+            ->setLabel('Licenciement pour faute')
+            ->setSeverityLevel(5)
+            ->setRequiresHearing(true)
             ->setActive(true);
 
         $violations = $this->validator->validate($scale);
@@ -39,7 +53,7 @@ class SanctionScaleValidationTest extends TestCase
         $scale = (new SanctionScale())
             ->setCode(SanctionScaleConstants::CODE_WARN)
             ->setLabel('Avertissement')
-            ->setSeverityLevel(5)
+            ->setSeverityLevel(6)
             ->setRequiresHearing(false)
             ->setActive(true);
 
@@ -66,8 +80,8 @@ class SanctionScaleValidationTest extends TestCase
     {
         $scale = (new SanctionScale())
             ->setCode(SanctionScaleConstants::CODE_SUSPEND)
-            ->setLabel('Mise à pied')
-            ->setSeverityLevel(3)
+            ->setLabel('Mise à pied disciplinaire')
+            ->setSeverityLevel(4)
             ->setRequiresHearing(true)
             ->setMaxDurationDays(-1)
             ->setActive(true);

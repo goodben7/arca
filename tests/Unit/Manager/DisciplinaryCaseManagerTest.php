@@ -22,9 +22,11 @@ use App\Model\ExitProcessConstants;
 use App\Model\NewDisciplinaryCaseModel;
 use App\Model\NewExitProcessModel;
 use App\Model\OpenDisciplinaryCaseModel;
+use App\Model\RequestDisciplinaryExplanationModel;
 use App\Model\SanctionScaleConstants;
 use App\Model\StartExitProcessModel;
 use App\Model\SuspendEmployeeModel;
+use App\Policy\DisciplinaryRecidivismPolicy;
 use App\Repository\DisciplinaryCaseRepository;
 use App\Service\ActivityEventDispatcher;
 use Doctrine\ORM\EntityManagerInterface;
@@ -40,6 +42,7 @@ class DisciplinaryCaseManagerTest extends ManagerTestCase
     private EmployeeManager&MockObject $employees;
     private ExitProcessManager&MockObject $exitProcesses;
     private DisciplinaryCaseRepository&MockObject $disciplinaryCases;
+    private DisciplinaryRecidivismPolicy&MockObject $recidivism;
     private DisciplinaryCaseManager $manager;
 
     protected function setUp(): void
@@ -49,6 +52,7 @@ class DisciplinaryCaseManagerTest extends ManagerTestCase
         $this->employees = $this->createMock(EmployeeManager::class);
         $this->exitProcesses = $this->createMock(ExitProcessManager::class);
         $this->disciplinaryCases = $this->createMock(DisciplinaryCaseRepository::class);
+        $this->recidivism = $this->createMock(DisciplinaryRecidivismPolicy::class);
 
         $security = $this->createMock(Security::class);
         $security->method('getUser')->willReturn(null);
@@ -62,6 +66,7 @@ class DisciplinaryCaseManagerTest extends ManagerTestCase
             $this->employees,
             $this->exitProcesses,
             $this->disciplinaryCases,
+            $this->recidivism,
         );
     }
 
@@ -127,6 +132,36 @@ class DisciplinaryCaseManagerTest extends ManagerTestCase
         ));
     }
 
+    public function testCreateRejectsWhenRecidivismPolicyBlocks(): void
+    {
+        $employee = $this->createEmployee('EMTEST001', EmployeeConstants::STATUS_ACTIVE);
+        $scale = $this->createWarnScale();
+
+        $this->em->method('find')->willReturnCallback(function (string $class, $id) use ($employee, $scale) {
+            return match (true) {
+                Employee::class === $class && 'EMTEST001' === $id => $employee,
+                SanctionScale::class === $class && 'SSTEST001' === $id => $scale,
+                default => null,
+            };
+        });
+        $this->disciplinaryCases->method('findActiveForEmployee')->with('EMTEST001')->willReturn(null);
+        $this->recidivism
+            ->expects($this->once())
+            ->method('assertAllowed')
+            ->with('EMTEST001', $scale, false)
+            ->willThrowException(new InvalidActionInputException('recidivism: same severity 2'));
+
+        $this->expectException(InvalidActionInputException::class);
+        $this->expectExceptionMessage('recidivism: same severity 2');
+
+        $this->manager->createFrom(new NewDisciplinaryCaseModel(
+            'EMTEST001',
+            'SSTEST001',
+            'Faits disciplinaires',
+            new \DateTimeImmutable('2026-07-01'),
+        ));
+    }
+
     public function testOpenDispatchesDisciplinaryCaseOpenedEvent(): void
     {
         $scale = $this->createWarnScale();
@@ -151,7 +186,7 @@ class DisciplinaryCaseManagerTest extends ManagerTestCase
         self::assertNotNull($result->getOpenedAt());
     }
 
-    public function testDecideFromOpenedWhenHearingNotRequired(): void
+    public function testRequestExplanationFromOpened(): void
     {
         $scale = $this->createWarnScale();
         $case = (new DisciplinaryCase())
@@ -160,6 +195,49 @@ class DisciplinaryCaseManagerTest extends ManagerTestCase
             ->setFacts('Faits')
             ->setOccurredAt(new \DateTimeImmutable('2026-07-01'))
             ->setStatus(DisciplinaryCaseConstants::STATUS_OPENED);
+        $this->setEntityId($case, 'DSTEST001');
+
+        $this->em->method('find')->willReturn($case);
+        $this->em->expects($this->once())->method('flush');
+
+        $result = $this->manager->requestExplanationFrom(new RequestDisciplinaryExplanationModel(
+            'DSTEST001',
+            null,
+            'Je conteste les faits.',
+        ));
+
+        self::assertSame(DisciplinaryCaseConstants::STATUS_EXPLANATION_REQUESTED, $result->getStatus());
+        self::assertNotNull($result->getExplanationRequestedAt());
+        self::assertNotNull($result->getExplanationDueAt());
+        self::assertSame('Je conteste les faits.', $result->getExplanationText());
+    }
+
+    public function testDecideFromOpenedRejectedUntilExplanationRequested(): void
+    {
+        $scale = $this->createWarnScale();
+        $case = (new DisciplinaryCase())
+            ->setEmployee('EMTEST001')
+            ->setSanctionScale($scale)
+            ->setFacts('Faits')
+            ->setOccurredAt(new \DateTimeImmutable('2026-07-01'))
+            ->setStatus(DisciplinaryCaseConstants::STATUS_OPENED);
+        $this->setEntityId($case, 'DSTEST001');
+
+        $this->em->method('find')->willReturn($case);
+        $this->expectException(InvalidActionInputException::class);
+
+        $this->manager->decideFrom(new DecideDisciplinaryCaseModel('DSTEST001'));
+    }
+
+    public function testDecideFromExplanationRequestedWhenHearingNotRequired(): void
+    {
+        $scale = $this->createWarnScale();
+        $case = (new DisciplinaryCase())
+            ->setEmployee('EMTEST001')
+            ->setSanctionScale($scale)
+            ->setFacts('Faits')
+            ->setOccurredAt(new \DateTimeImmutable('2026-07-01'))
+            ->setStatus(DisciplinaryCaseConstants::STATUS_EXPLANATION_REQUESTED);
         $this->setEntityId($case, 'DSTEST001');
 
         $this->em->method('find')->willReturn($case);
@@ -176,8 +254,8 @@ class DisciplinaryCaseManagerTest extends ManagerTestCase
     {
         $scale = (new SanctionScale())
             ->setCode(SanctionScaleConstants::CODE_SUSPEND)
-            ->setLabel('Mise à pied')
-            ->setSeverityLevel(3)
+            ->setLabel('Mise à pied disciplinaire')
+            ->setSeverityLevel(4)
             ->setRequiresHearing(true)
             ->setActive(true);
         $this->setEntityId($scale, 'SSTEST003');
@@ -239,14 +317,53 @@ class DisciplinaryCaseManagerTest extends ManagerTestCase
         self::assertSame(DisciplinaryCaseConstants::STATUS_SANCTION_APPLIED, $result->getStatus());
         self::assertInstanceOf(Document::class, $result->getDocument());
         self::assertSame(Document::TYPE_WARNING_LETTER, $result->getDocument()->getType());
+        self::assertNotNull($result->getAppealDeadlineAt());
+        self::assertSame(
+            $result->getAppliedAt()?->modify('+'.DisciplinaryCaseConstants::APPEAL_DEADLINE_DAYS.' days')?->format('Y-m-d'),
+            $result->getAppealDeadlineAt()->format('Y-m-d'),
+        );
+    }
+
+    public function testApplyReprimandCreatesDocument(): void
+    {
+        $scale = (new SanctionScale())
+            ->setCode(SanctionScaleConstants::CODE_REPRIMAND)
+            ->setLabel('Réprimande / Observation')
+            ->setSeverityLevel(1)
+            ->setRequiresHearing(false)
+            ->setActive(true);
+        $this->setEntityId($scale, 'SSTEST000');
+
+        $case = (new DisciplinaryCase())
+            ->setEmployee('EMTEST001')
+            ->setSanctionScale($scale)
+            ->setFacts('Faits')
+            ->setOccurredAt(new \DateTimeImmutable('2026-07-01'))
+            ->setStatus(DisciplinaryCaseConstants::STATUS_DECISION_PENDING);
+        $this->setEntityId($case, 'DSTEST001');
+
+        $this->em->method('find')->willReturn($case);
+        $this->em
+            ->expects($this->once())
+            ->method('persist')
+            ->with(self::callback(static function (Document $document): bool {
+                return Document::TYPE_WARNING_LETTER === $document->getType()
+                    && 'Sanction disciplinaire — Réprimande / Observation' === $document->getTitle();
+            }));
+        $this->em->expects($this->once())->method('flush');
+
+        $result = $this->manager->applyFrom(new ApplyDisciplinarySanctionModel('DSTEST001'));
+
+        self::assertInstanceOf(Document::class, $result->getDocument());
+        self::assertSame(Document::TYPE_WARNING_LETTER, $result->getDocument()->getType());
     }
 
     public function testApplyDismissCreatesExitProcess(): void
     {
         $scale = (new SanctionScale())
             ->setCode(SanctionScaleConstants::CODE_DISMISS)
-            ->setLabel('Licenciement')
-            ->setSeverityLevel(4)
+            ->setLabel('Licenciement pour faute')
+            ->setSeverityLevel(5)
             ->setRequiresHearing(true)
             ->setActive(true);
         $this->setEntityId($scale, 'SSTEST004');
@@ -333,8 +450,8 @@ class DisciplinaryCaseManagerTest extends ManagerTestCase
     {
         $scale = (new SanctionScale())
             ->setCode(SanctionScaleConstants::CODE_SUSPEND)
-            ->setLabel('Mise à pied')
-            ->setSeverityLevel(3)
+            ->setLabel('Mise à pied disciplinaire')
+            ->setSeverityLevel(4)
             ->setRequiresHearing(true)
             ->setActive(true);
         $this->setEntityId($scale, 'SSTEST003');
@@ -362,8 +479,8 @@ class DisciplinaryCaseManagerTest extends ManagerTestCase
     {
         $scale = (new SanctionScale())
             ->setCode(SanctionScaleConstants::CODE_DISMISS)
-            ->setLabel('Licenciement')
-            ->setSeverityLevel(4)
+            ->setLabel('Licenciement pour faute')
+            ->setSeverityLevel(5)
             ->setRequiresHearing(true)
             ->setActive(true);
         $this->setEntityId($scale, 'SSTEST004');
@@ -388,7 +505,7 @@ class DisciplinaryCaseManagerTest extends ManagerTestCase
         $scale = (new SanctionScale())
             ->setCode(SanctionScaleConstants::CODE_WARN)
             ->setLabel('Avertissement')
-            ->setSeverityLevel(1)
+            ->setSeverityLevel(2)
             ->setRequiresHearing(false)
             ->setActive(true);
         $this->setEntityId($scale, 'SSTEST001');

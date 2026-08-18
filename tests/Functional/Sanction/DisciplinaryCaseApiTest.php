@@ -56,6 +56,8 @@ class DisciplinaryCaseApiTest extends AbstractApiTestCase
         self::assertResponseStatusCodeSame(200);
         self::assertSame(DisciplinaryCaseConstants::STATUS_OPENED, $this->decodeJsonResponse()['status']);
 
+        $this->requestExplanation($token, $caseId, 'Retards dus à un problème de transport.');
+
         $this->apiRequest(
             'GET',
             '/api/employees/'.$employee->getId().'/journey',
@@ -88,6 +90,7 @@ class DisciplinaryCaseApiTest extends AbstractApiTestCase
         self::assertResponseStatusCodeSame(200);
         $applied = $this->decodeJsonResponse();
         self::assertSame(DisciplinaryCaseConstants::STATUS_SANCTION_APPLIED, $applied['status']);
+        self::assertNotNull($applied['appealDeadlineAt']);
         self::assertArrayHasKey('document', $applied);
         self::assertSame('WARN', $applied['document']['type']);
         self::assertStringStartsWith('DC', $applied['document']['id']);
@@ -109,15 +112,7 @@ class DisciplinaryCaseApiTest extends AbstractApiTestCase
         $token = $this->authenticate('disciplinary.summary@arca.test');
 
         $employee = $this->createEmployee('EMP-DISC-SUM-001');
-
-        $scale = (new SanctionScale())
-            ->setCode(SanctionScaleConstants::CODE_WARN)
-            ->setLabel('Avertissement')
-            ->setSeverityLevel(1)
-            ->setRequiresHearing(false)
-            ->setActive(true);
-        $this->entityManager->persist($scale);
-        $this->entityManager->flush();
+        [$scale] = $this->persistWarnAndBlameScales();
 
         $this->apiRequest(
             'POST',
@@ -140,6 +135,8 @@ class DisciplinaryCaseApiTest extends AbstractApiTestCase
             ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
         );
         self::assertResponseStatusCodeSame(200);
+
+        $this->requestExplanation($token, $caseId);
 
         $this->apiRequest(
             'POST',
@@ -180,6 +177,117 @@ class DisciplinaryCaseApiTest extends AbstractApiTestCase
         self::assertNotNull($summary['lastAppliedAt']);
         self::assertFalse($summary['hasActiveCase']);
         self::assertTrue($summary['isRepeatOffender']);
+        self::assertTrue($summary['requiresAcknowledgement']);
+        self::assertSame(SanctionScaleConstants::CODE_BLAME, $summary['suggestedNextCode']);
+        self::assertSame(3, $summary['suggestedNextSeverity']);
+        self::assertSame('Blâme', $summary['suggestedNextLabel']);
+        self::assertNotEmpty($summary['reasons']);
+    }
+
+    public function testRecidivismBlocksSameLevelUnlessAcknowledged(): void
+    {
+        $this->createSuperAdminUser('disciplinary.recidivism@arca.test');
+        $token = $this->authenticate('disciplinary.recidivism@arca.test');
+
+        $employee = $this->createEmployee('EMP-DISC-REC-001');
+        [$warn, $blame] = $this->persistWarnAndBlameScales();
+
+        $this->apiRequest(
+            'POST',
+            '/api/disciplinary_cases',
+            [
+                'employee' => $employee->getId(),
+                'sanctionScale' => $warn->getId(),
+                'facts' => 'Premier avertissement',
+                'occurredAt' => '2026-07-10T10:00:00+00:00',
+            ],
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
+        );
+        self::assertResponseStatusCodeSame(201);
+        $this->closeCaseWithoutHearing($token, $this->decodeJsonResponse()['id'], 'Avertissement confirmé');
+
+        $this->apiRequest(
+            'POST',
+            '/api/disciplinary_cases',
+            [
+                'employee' => $employee->getId(),
+                'sanctionScale' => $warn->getId(),
+                'facts' => 'Même palier sans acknowledgement',
+                'occurredAt' => '2026-08-01T10:00:00+00:00',
+            ],
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
+        );
+        self::assertResponseStatusCodeSame(400);
+
+        $this->apiRequest(
+            'POST',
+            '/api/disciplinary_cases',
+            [
+                'employee' => $employee->getId(),
+                'sanctionScale' => $blame->getId(),
+                'facts' => 'Escalade vers le blâme',
+                'occurredAt' => '2026-08-02T10:00:00+00:00',
+            ],
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
+        );
+        self::assertResponseStatusCodeSame(201);
+        $escalatedId = $this->decodeJsonResponse()['id'];
+
+        $this->apiRequest(
+            'POST',
+            '/api/disciplinary_cases/cancellations',
+            ['disciplinaryCaseId' => $escalatedId],
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
+        );
+        self::assertResponseStatusCodeSame(200);
+
+        $this->apiRequest(
+            'POST',
+            '/api/disciplinary_cases',
+            [
+                'employee' => $employee->getId(),
+                'sanctionScale' => $warn->getId(),
+                'facts' => 'Même palier avec acknowledgement',
+                'occurredAt' => '2026-08-03T10:00:00+00:00',
+                'acknowledgeRecidivism' => true,
+            ],
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
+        );
+        self::assertResponseStatusCodeSame(201);
+        $repeatId = $this->decodeJsonResponse()['id'];
+
+        $this->apiRequest(
+            'POST',
+            '/api/disciplinary_cases/openings',
+            ['disciplinaryCaseId' => $repeatId],
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
+        );
+        self::assertResponseStatusCodeSame(200);
+        $this->requestExplanation($token, $repeatId);
+
+        $this->apiRequest(
+            'POST',
+            '/api/disciplinary_cases/decisions',
+            ['disciplinaryCaseId' => $repeatId, 'reason' => 'Même palier sans ack'],
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
+        );
+        self::assertResponseStatusCodeSame(400);
+
+        $this->apiRequest(
+            'POST',
+            '/api/disciplinary_cases/decisions',
+            [
+                'disciplinaryCaseId' => $repeatId,
+                'reason' => 'Même palier assumé',
+                'acknowledgeRecidivism' => true,
+            ],
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
+        );
+        self::assertResponseStatusCodeSame(200);
+        self::assertSame(
+            DisciplinaryCaseConstants::STATUS_DECISION_PENDING,
+            $this->decodeJsonResponse()['status'],
+        );
     }
 
     public function testDismissApplyCreatesExitProcess(): void
@@ -219,6 +327,8 @@ class DisciplinaryCaseApiTest extends AbstractApiTestCase
             ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
         );
         self::assertResponseStatusCodeSame(200);
+
+        $this->requestExplanation($token, $caseId);
 
         $this->apiRequest(
             'POST',
@@ -288,6 +398,7 @@ class DisciplinaryCaseApiTest extends AbstractApiTestCase
             ['disciplinaryCaseId' => $caseId],
             ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
         );
+        $this->requestExplanation($token, $caseId);
         $this->apiRequest(
             'POST',
             '/api/disciplinary_cases/decisions',
@@ -308,5 +419,89 @@ class DisciplinaryCaseApiTest extends AbstractApiTestCase
         self::assertArrayHasKey('document', $applied);
         self::assertSame('WARN', $applied['document']['type']);
         self::assertNotEmpty($applied['document']['filePath'] ?? null);
+    }
+
+    /**
+     * @return array{0: SanctionScale, 1: SanctionScale}
+     */
+    private function persistWarnAndBlameScales(): array
+    {
+        $warn = (new SanctionScale())
+            ->setCode(SanctionScaleConstants::CODE_WARN)
+            ->setLabel('Avertissement')
+            ->setSeverityLevel(1)
+            ->setRequiresHearing(false)
+            ->setActive(true);
+        $blame = (new SanctionScale())
+            ->setCode(SanctionScaleConstants::CODE_BLAME)
+            ->setLabel('Blâme')
+            ->setSeverityLevel(3)
+            ->setRequiresHearing(true)
+            ->setActive(true);
+        $this->entityManager->persist($warn);
+        $this->entityManager->persist($blame);
+        $this->entityManager->flush();
+
+        return [$warn, $blame];
+    }
+
+    private function closeCaseWithoutHearing(string $token, string $caseId, string $reason): void
+    {
+        $this->apiRequest(
+            'POST',
+            '/api/disciplinary_cases/openings',
+            ['disciplinaryCaseId' => $caseId],
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
+        );
+        self::assertResponseStatusCodeSame(200);
+
+        $this->requestExplanation($token, $caseId);
+
+        $this->apiRequest(
+            'POST',
+            '/api/disciplinary_cases/decisions',
+            ['disciplinaryCaseId' => $caseId, 'reason' => $reason],
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
+        );
+        self::assertResponseStatusCodeSame(200);
+
+        $this->apiRequest(
+            'POST',
+            '/api/disciplinary_cases/applications',
+            ['disciplinaryCaseId' => $caseId],
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
+        );
+        self::assertResponseStatusCodeSame(200);
+
+        $this->apiRequest(
+            'POST',
+            '/api/disciplinary_cases/closures',
+            ['disciplinaryCaseId' => $caseId],
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
+        );
+        self::assertResponseStatusCodeSame(200);
+    }
+
+    private function requestExplanation(string $token, string $caseId, ?string $explanationText = null): void
+    {
+        $body = ['disciplinaryCaseId' => $caseId];
+        if (null !== $explanationText) {
+            $body['explanationText'] = $explanationText;
+        }
+
+        $this->apiRequest(
+            'POST',
+            '/api/disciplinary_cases/explanations',
+            $body,
+            ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
+        );
+        self::assertResponseStatusCodeSame(200);
+        $payload = $this->decodeJsonResponse();
+        self::assertSame(DisciplinaryCaseConstants::STATUS_EXPLANATION_REQUESTED, $payload['status']);
+        self::assertNotNull($payload['explanationRequestedAt']);
+        self::assertNotNull($payload['explanationDueAt']);
+        if (null !== $explanationText) {
+            self::assertSame($explanationText, $payload['explanationText']);
+        }
     }
 }

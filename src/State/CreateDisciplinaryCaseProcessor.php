@@ -24,6 +24,7 @@ class CreateDisciplinaryCaseProcessor implements ProcessorInterface
             $data->facts,
             $data->occurredAt,
             $data->reason,
+            $data->acknowledgeRecidivism,
         ));
     }
 }

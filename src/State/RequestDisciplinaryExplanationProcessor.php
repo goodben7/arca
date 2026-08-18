@@ -4,12 +4,12 @@ namespace App\State;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
-use App\Dto\DecideDisciplinaryCaseDto;
+use App\Dto\RequestDisciplinaryExplanationDto;
 use App\Entity\DisciplinaryCase;
 use App\Manager\DisciplinaryCaseManager;
-use App\Model\DecideDisciplinaryCaseModel;
+use App\Model\RequestDisciplinaryExplanationModel;
 
-class DecideDisciplinaryCaseProcessor implements ProcessorInterface
+class RequestDisciplinaryExplanationProcessor implements ProcessorInterface
 {
     public function __construct(private DisciplinaryCaseManager $manager)
     {
@@ -17,11 +17,11 @@ class DecideDisciplinaryCaseProcessor implements ProcessorInterface
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): DisciplinaryCase
     {
-        /** @var DecideDisciplinaryCaseDto $data */
-        return $this->manager->decideFrom(new DecideDisciplinaryCaseModel(
+        /** @var RequestDisciplinaryExplanationDto $data */
+        return $this->manager->requestExplanationFrom(new RequestDisciplinaryExplanationModel(
             $data->disciplinaryCaseId,
-            $data->reason,
-            $data->acknowledgeRecidivism,
+            $data->explanationDueAt,
+            $data->explanationText,
         ));
     }
 }

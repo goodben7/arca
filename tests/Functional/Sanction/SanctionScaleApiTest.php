@@ -16,8 +16,8 @@ class SanctionScaleApiTest extends AbstractApiTestCase
             'POST',
             '/api/sanction_scales',
             [
-                'code' => SanctionScaleConstants::CODE_WARN,
-                'label' => 'Avertissement',
+                'code' => SanctionScaleConstants::CODE_REPRIMAND,
+                'label' => 'Réprimande / Observation',
                 'severityLevel' => 1,
                 'requiresHearing' => false,
                 'active' => true,
@@ -28,14 +28,14 @@ class SanctionScaleApiTest extends AbstractApiTestCase
 
         $created = $this->decodeJsonResponse();
         self::assertStringStartsWith('SS', $created['id']);
-        self::assertSame(SanctionScaleConstants::CODE_WARN, $created['code']);
+        self::assertSame(SanctionScaleConstants::CODE_REPRIMAND, $created['code']);
         self::assertSame(1, $created['severityLevel']);
         self::assertFalse($created['requiresHearing']);
         self::assertTrue($created['active']);
 
         $this->apiRequest(
             'GET',
-            '/api/sanction_scales?code='.SanctionScaleConstants::CODE_WARN,
+            '/api/sanction_scales?code='.SanctionScaleConstants::CODE_REPRIMAND,
             headers: ['HTTP_AUTHORIZATION' => 'Bearer '.$token],
         );
         self::assertResponseIsSuccessful();
@@ -45,7 +45,7 @@ class SanctionScaleApiTest extends AbstractApiTestCase
         $this->apiRequest(
             'PATCH',
             '/api/sanction_scales/'.$created['id'],
-            ['label' => 'Avertissement écrit', 'requiresHearing' => true],
+            ['label' => 'Réprimande écrite', 'requiresHearing' => true],
             [
                 'HTTP_AUTHORIZATION' => 'Bearer '.$token,
                 'CONTENT_TYPE' => 'application/merge-patch+json',
@@ -53,7 +53,7 @@ class SanctionScaleApiTest extends AbstractApiTestCase
         );
         self::assertResponseIsSuccessful();
         $updated = $this->decodeJsonResponse();
-        self::assertSame('Avertissement écrit', $updated['label']);
+        self::assertSame('Réprimande écrite', $updated['label']);
         self::assertTrue($updated['requiresHearing']);
     }
 

@@ -20,6 +20,7 @@ use App\Dto\CreateDisciplinaryCaseDto;
 use App\Dto\DecideDisciplinaryCaseDto;
 use App\Dto\OpenDisciplinaryCaseDto;
 use App\Dto\RejectDisciplinaryCaseDto;
+use App\Dto\RequestDisciplinaryExplanationDto;
 use App\Dto\ScheduleDisciplinaryHearingDto;
 use App\Model\DisciplinaryCaseConstants;
 use App\Model\RessourceInterface;
@@ -31,6 +32,7 @@ use App\State\CreateDisciplinaryCaseProcessor;
 use App\State\DecideDisciplinaryCaseProcessor;
 use App\State\OpenDisciplinaryCaseProcessor;
 use App\State\RejectDisciplinaryCaseProcessor;
+use App\State\RequestDisciplinaryExplanationProcessor;
 use App\State\ScheduleDisciplinaryHearingProcessor;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -61,6 +63,13 @@ use Symfony\Component\Validator\Constraints as Assert;
             security: 'is_granted("ROLE_DISCIPLINARY_CASE_OPEN")',
             input: OpenDisciplinaryCaseDto::class,
             processor: OpenDisciplinaryCaseProcessor::class,
+            status: 200,
+        ),
+        new Post(
+            uriTemplate: '/disciplinary_cases/explanations',
+            security: 'is_granted("ROLE_DISCIPLINARY_CASE_REQUEST_EXPLANATION")',
+            input: RequestDisciplinaryExplanationDto::class,
+            processor: RequestDisciplinaryExplanationProcessor::class,
             status: 200,
         ),
         new Post(
@@ -168,6 +177,18 @@ class DisciplinaryCase implements RessourceInterface
     #[Groups(['disciplinary_case:get'])]
     private ?string $openedBy = null;
 
+    #[ORM\Column(name: 'DS_EXPLANATION_REQUESTED_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['disciplinary_case:get'])]
+    private ?\DateTimeImmutable $explanationRequestedAt = null;
+
+    #[ORM\Column(name: 'DS_EXPLANATION_DUE_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['disciplinary_case:get'])]
+    private ?\DateTimeImmutable $explanationDueAt = null;
+
+    #[ORM\Column(name: 'DS_EXPLANATION_TEXT', type: Types::TEXT, nullable: true)]
+    #[Groups(['disciplinary_case:get'])]
+    private ?string $explanationText = null;
+
     #[ORM\Column(name: 'DS_HEARING_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
     #[Groups(['disciplinary_case:get'])]
     private ?\DateTimeImmutable $hearingAt = null;
@@ -191,6 +212,10 @@ class DisciplinaryCase implements RessourceInterface
     #[ORM\Column(name: 'DS_APPLIED_BY', length: 16, nullable: true)]
     #[Groups(['disciplinary_case:get'])]
     private ?string $appliedBy = null;
+
+    #[ORM\Column(name: 'DS_APPEAL_DEADLINE_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['disciplinary_case:get'])]
+    private ?\DateTimeImmutable $appealDeadlineAt = null;
 
     #[ORM\Column(name: 'DS_CLOSED_AT', type: Types::DATETIME_IMMUTABLE, nullable: true)]
     #[Groups(['disciplinary_case:get'])]
@@ -339,6 +364,42 @@ class DisciplinaryCase implements RessourceInterface
         return $this;
     }
 
+    public function getExplanationRequestedAt(): ?\DateTimeImmutable
+    {
+        return $this->explanationRequestedAt;
+    }
+
+    public function setExplanationRequestedAt(?\DateTimeImmutable $explanationRequestedAt): static
+    {
+        $this->explanationRequestedAt = $explanationRequestedAt;
+
+        return $this;
+    }
+
+    public function getExplanationDueAt(): ?\DateTimeImmutable
+    {
+        return $this->explanationDueAt;
+    }
+
+    public function setExplanationDueAt(?\DateTimeImmutable $explanationDueAt): static
+    {
+        $this->explanationDueAt = $explanationDueAt;
+
+        return $this;
+    }
+
+    public function getExplanationText(): ?string
+    {
+        return $this->explanationText;
+    }
+
+    public function setExplanationText(?string $explanationText): static
+    {
+        $this->explanationText = $explanationText;
+
+        return $this;
+    }
+
     public function getHearingAt(): ?\DateTimeImmutable
     {
         return $this->hearingAt;
@@ -407,6 +468,18 @@ class DisciplinaryCase implements RessourceInterface
     public function setAppliedBy(?string $appliedBy): static
     {
         $this->appliedBy = $appliedBy;
+
+        return $this;
+    }
+
+    public function getAppealDeadlineAt(): ?\DateTimeImmutable
+    {
+        return $this->appealDeadlineAt;
+    }
+
+    public function setAppealDeadlineAt(?\DateTimeImmutable $appealDeadlineAt): static
+    {
+        $this->appealDeadlineAt = $appealDeadlineAt;
 
         return $this;
     }

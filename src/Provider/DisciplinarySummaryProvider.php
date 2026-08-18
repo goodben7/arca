@@ -7,6 +7,7 @@ use ApiPlatform\State\ProviderInterface;
 use App\Entity\Employee;
 use App\Exception\UnavailableDataException;
 use App\Model\DisciplinarySummaryResult;
+use App\Policy\DisciplinaryRecidivismPolicy;
 use App\Repository\DisciplinaryCaseRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -15,6 +16,7 @@ class DisciplinarySummaryProvider implements ProviderInterface
     public function __construct(
         private EntityManagerInterface $em,
         private DisciplinaryCaseRepository $disciplinaryCases,
+        private DisciplinaryRecidivismPolicy $recidivism,
     ) {
     }
 
@@ -33,18 +35,22 @@ class DisciplinarySummaryProvider implements ProviderInterface
         }
 
         $appliedSanctionCount = $this->disciplinaryCases->countAppliedSanctionsForEmployee($employeeId);
-        $latestApplied = $this->disciplinaryCases->findLatestAppliedForEmployee($employeeId);
-        $scale = $latestApplied?->getSanctionScale();
+        $evaluation = $this->recidivism->evaluateForEmployee($employeeId);
 
         return new DisciplinarySummaryResult(
             $employeeId,
             $appliedSanctionCount,
-            $this->disciplinaryCases->getMaxSeverityForEmployee($employeeId),
-            $scale?->getCode(),
-            $scale?->getLabel(),
-            $latestApplied?->getAppliedAt(),
+            $evaluation->lastSeverityLevel,
+            $evaluation->lastSanctionCode,
+            $evaluation->lastSanctionLabel,
+            $this->disciplinaryCases->findLatestAppliedForEmployee($employeeId)?->getAppliedAt(),
             null !== $this->disciplinaryCases->findActiveForEmployee($employeeId),
-            $appliedSanctionCount >= 1,
+            $evaluation->isRepeatOffender,
+            $evaluation->requiresAcknowledgement,
+            $evaluation->suggestedNextSeverity,
+            $evaluation->suggestedNextCode,
+            $evaluation->suggestedNextLabel,
+            $evaluation->reasons,
         );
     }
 }

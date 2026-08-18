@@ -27,10 +27,12 @@ use App\Model\NewDisciplinaryCaseModel;
 use App\Model\NewExitProcessModel;
 use App\Model\OpenDisciplinaryCaseModel;
 use App\Model\RejectDisciplinaryCaseModel;
+use App\Model\RequestDisciplinaryExplanationModel;
 use App\Model\SanctionScaleConstants;
 use App\Model\ScheduleDisciplinaryHearingModel;
 use App\Model\StartExitProcessModel;
 use App\Model\SuspendEmployeeModel;
+use App\Policy\DisciplinaryRecidivismPolicy;
 use App\Repository\DisciplinaryCaseRepository;
 use App\Service\ActivityEventDispatcher;
 use Doctrine\ORM\EntityManagerInterface;
@@ -54,6 +56,7 @@ class DisciplinaryCaseManager
         private EmployeeManager $employees,
         private ExitProcessManager $exitProcesses,
         private DisciplinaryCaseRepository $disciplinaryCases,
+        private DisciplinaryRecidivismPolicy $recidivism,
     ) {
     }
 
@@ -75,6 +78,12 @@ class DisciplinaryCaseManager
         if (null !== $this->disciplinaryCases->findActiveForEmployee((string) $employee->getId())) {
             throw new InvalidActionInputException('an active disciplinary case already exists for this employee');
         }
+
+        $this->recidivism->assertAllowed(
+            (string) $employee->getId(),
+            $scale,
+            (bool) $model->acknowledgeRecidivism,
+        );
 
         $occurredAt = $model->occurredAt instanceof \DateTimeImmutable
             ? $model->occurredAt
@@ -118,6 +127,46 @@ class DisciplinaryCaseManager
         return $case;
     }
 
+    public function requestExplanationFrom(RequestDisciplinaryExplanationModel $model): DisciplinaryCase
+    {
+        $case = $this->findCase($model->disciplinaryCaseId);
+
+        if (DisciplinaryCaseConstants::STATUS_EXPLANATION_REQUESTED === $case->getStatus()) {
+            if (null === $model->explanationText || '' === trim((string) $model->explanationText)) {
+                throw new InvalidActionInputException('explanationText is required to record the employee reply');
+            }
+
+            $case->setExplanationText($model->explanationText);
+            $this->em->flush();
+            $this->eventDispatcher->dispatch($case, ActivityEvent::ACTION_EDIT, null, 'disciplinary explanation recorded');
+
+            return $case;
+        }
+
+        $this->assertActionAllowed($case, DisciplinaryCaseConstants::ACTION_REQUEST_EXPLANATION);
+
+        $requestedAt = new \DateTimeImmutable();
+        $dueAt = null !== $model->explanationDueAt
+            ? ($model->explanationDueAt instanceof \DateTimeImmutable
+                ? $model->explanationDueAt
+                : \DateTimeImmutable::createFromInterface($model->explanationDueAt))
+            : $requestedAt->modify(sprintf('+%d days', DisciplinaryCaseConstants::EXPLANATION_DUE_DAYS));
+
+        $case
+            ->setStatus(DisciplinaryCaseConstants::STATUS_EXPLANATION_REQUESTED)
+            ->setExplanationRequestedAt($requestedAt)
+            ->setExplanationDueAt($dueAt);
+
+        if (null !== $model->explanationText && '' !== trim($model->explanationText)) {
+            $case->setExplanationText($model->explanationText);
+        }
+
+        $this->em->flush();
+        $this->eventDispatcher->dispatch($case, ActivityEvent::ACTION_EDIT, null, 'disciplinary explanation requested');
+
+        return $case;
+    }
+
     public function scheduleHearingFrom(ScheduleDisciplinaryHearingModel $model): DisciplinaryCase
     {
         $case = $this->findCase($model->disciplinaryCaseId);
@@ -153,6 +202,15 @@ class DisciplinaryCaseManager
         $case = $this->findCase($model->disciplinaryCaseId);
         $this->assertActionAllowed($case, DisciplinaryCaseConstants::ACTION_DECIDE);
 
+        $scale = $case->getSanctionScale();
+        if (null !== $scale) {
+            $this->recidivism->assertAllowed(
+                (string) $case->getEmployee(),
+                $scale,
+                (bool) $model->acknowledgeRecidivism,
+            );
+        }
+
         $actorId = $this->resolveActorId();
         $case
             ->setStatus(DisciplinaryCaseConstants::STATUS_DECISION_PENDING)
@@ -181,7 +239,7 @@ class DisciplinaryCaseManager
         if (null !== $scale) {
             $code = $scale->getCode();
 
-            if (\in_array($code, [SanctionScaleConstants::CODE_WARN, SanctionScaleConstants::CODE_BLAME], true)) {
+            if (SanctionScaleConstants::isWrittenNoticeCode($code)) {
                 $document = (new Document())
                     ->setType(Document::TYPE_WARNING_LETTER)
                     ->setTitle(sprintf('Sanction disciplinaire — %s', $scale->getLabel()))
@@ -195,7 +253,7 @@ class DisciplinaryCaseManager
                 $case->setDocument($document);
             } elseif (null !== $model->file) {
                 throw new InvalidActionInputException(
-                    'warning letter file is only allowed for WARN or BLAME sanctions'
+                    'warning letter file is only allowed for REPRIMAND, WARN or BLAME sanctions'
                 );
             } elseif (SanctionScaleConstants::CODE_SUSPEND === $code) {
                 $this->employees->suspendFrom(new SuspendEmployeeModel((string) $case->getEmployee()));
@@ -210,10 +268,14 @@ class DisciplinaryCaseManager
             }
         }
 
+        $appliedAt = new \DateTimeImmutable();
         $case
             ->setStatus(DisciplinaryCaseConstants::STATUS_SANCTION_APPLIED)
-            ->setAppliedAt(new \DateTimeImmutable())
-            ->setAppliedBy($actorId);
+            ->setAppliedAt($appliedAt)
+            ->setAppliedBy($actorId)
+            ->setAppealDeadlineAt($appliedAt->modify(
+                sprintf('+%d days', DisciplinaryCaseConstants::APPEAL_DEADLINE_DAYS)
+            ));
 
         $this->em->flush();
 

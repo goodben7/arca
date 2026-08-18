@@ -616,9 +616,9 @@ php bin/console messenger:consume async -vv
 
 | Concept | Préfixe | Rôle |
 |---------|---------|------|
-| **SanctionScale** | SS | Catalogue disciplinaire (`code`, `label`, `severityLevel`, `requiresHearing`, `maxDurationDays`, `active`) |
+| **SanctionScale** | SS | Catalogue disciplinaire (`code`, `label`, `severityLevel` 1–5, `requiresHearing`, `maxDurationDays`, `active`) |
 
-Codes seedés : `WARN` (1), `BLAME` (2), `SUSPEND` (3), `DISMISS` (4).
+Codes seedés (idempotent) : `REPRIMAND` (1), `WARN` (2), `BLAME` (3), `SUSPEND` (4), `DISMISS` (5).
 
 API :
 
@@ -633,17 +633,18 @@ API :
 |---------|---------|------|
 | **DisciplinaryCase** | DS | Procédure disciplinaire (machine à états, POST dédiés) |
 
-Statuts : `DRAFT` → `OPENED` → `HEARING_SCHEDULED` → `DECISION_PENDING` → `SANCTION_APPLIED` → `CLOSED` (↘ `CANCELLED` / `REJECTED`).
+Statuts : `DRAFT` → `OPENED` → `EXPLANATION_REQUESTED` → `HEARING_SCHEDULED` → `DECISION_PENDING` → `SANCTION_APPLIED` → `CLOSED` (↘ `CANCELLED` / `REJECTED`).
 
-Si `requiresHearing=false`, skip hearing : `OPENED` → decide.
+Si `requiresHearing=false`, skip hearing : `EXPLANATION_REQUESTED` → decide.
 
 API :
 
-- `POST /api/disciplinary_cases` (+ openings, hearings, decisions, applications, cancellations, rejections, closures)
+- `POST /api/disciplinary_cases` (+ openings, explanations, hearings, decisions, applications, cancellations, rejections, closures)
 - Permissions : `ROLE_DISCIPLINARY_CASE_*`
 - Journey : `DISCIPLINARY_STARTED`, `SANCTION_APPLIED` (stage `DISCIPLINARY`)
+- Champs procédure : `explanationRequestedAt`, `explanationDueAt` (défaut +8 j), `explanationText`, `appealDeadlineAt` (+8 j à l’application)
 - Effet : code `SUSPEND` → suspension employé à l’application
-- Migration : `Version20260729140000`
+- Migration : `Version20260729140000`, `Version20260818120000`
 
 ### Phase C — Effets d’application et récidives
 
@@ -651,17 +652,19 @@ API :
 |---------|------|
 | **Document** (WARN/BLAME) | Métadonnée `TYPE_WARNING_LETTER` liée à l’affaire (`DS_DOCUMENT`) |
 | **ExitProcess** (DISMISS) | Process de sortie `REASON_DISMISSAL` créé à l’application (`DS_EXIT_PROCESS`) |
-| **DisciplinarySummaryResult** | Synthèse récidives par employé |
+| **DisciplinarySummaryResult** | Synthèse récidives + palier suggéré |
+| **DisciplinaryRecidivismPolicy** | Règle d’escalade à la création et à la décision |
 
 Effets à l’application (`applications`) :
 
-- `WARN` / `BLAME` → `Document` `TYPE_WARNING_LETTER` (fichier optionnel via multipart `file`)
+- `WARN` / `BLAME` / `REPRIMAND` → `Document` `TYPE_WARNING_LETTER` (fichier optionnel via multipart `file`)
 - `SUSPEND` → suspension employé (Phase B)
 - `DISMISS` → `ExitProcess` créé **et démarré** (`IN_PROGRESS`, checklist offboarding)
 
 Règles :
 
 - Création refusée si affaire active existante pour l’employé
-- `GET /api/employees/{employeeId}/disciplinary-summary` — compteur sanctions, gravité max, dernière sanction, `hasActiveCase`, `isRepeatOffender`
+- Récidive : palier **>** max autorisé ; palier **=** max seulement avec `acknowledgeRecidivism` ; palier **<** max refusé
+- `GET /api/employees/{employeeId}/disciplinary-summary` — compteur, gravité max, dernière sanction, `hasActiveCase`, `isRepeatOffender`, palier suggéré (`suggestedNext*`), `requiresAcknowledgement`
 
 Migration : `Version20260729160000`

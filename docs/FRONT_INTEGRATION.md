@@ -747,7 +747,7 @@ Checklist : `config/offboarding_checklist.php`.
 
 | Ressource | Préfixe | Description |
 |-----------|---------|-------------|
-| `sanction_scales` | SS | Niveau de sanction (`code`, `label`, `severityLevel` 1–4, `requiresHearing`, `maxDurationDays`, `active`) |
+| `sanction_scales` | SS | Niveau de sanction (`code`, `label`, `severityLevel` 1–5, `requiresHearing`, `maxDurationDays`, `active`) |
 
 ```http
 GET /api/sanction_scales
@@ -758,7 +758,7 @@ PATCH /api/sanction_scales/{id}
 
 Rôles : `ROLE_SANCTION_SCALE_LIST|DETAILS|CREATE|UPDATE`
 
-Seed : `php bin/console app:seed:sanction-scales` → `WARN`, `BLAME`, `SUSPEND`, `DISMISS`.
+Seed : `php bin/console app:seed:sanction-scales` (idempotent) → `REPRIMAND` (1), `WARN` (2), `BLAME` (3), `SUSPEND` (4), `DISMISS` (5).
 
 #### 6.17.2 Affaire disciplinaire (workflow — Phase B)
 
@@ -769,17 +769,28 @@ Seed : `php bin/console app:seed:sanction-scales` → `WARN`, `BLAME`, `SUSPEND`
 **Statuts**
 
 ```
-DRAFT → OPENED → HEARING_SCHEDULED → DECISION_PENDING → SANCTION_APPLIED → CLOSED
-              ↘ CANCELLED / REJECTED
+DRAFT → OPENED → EXPLANATION_REQUESTED → HEARING_SCHEDULED → DECISION_PENDING → SANCTION_APPLIED → CLOSED
+                                  ↘ CANCELLED / REJECTED
 ```
 
-Si `sanctionScale.requiresHearing = false` (ex. WARN), on saute l’entretien : `OPENED → decisions`.
+Mapping Code du travail RDC :
+
+| Étape légale | Statut / action |
+|--------------|-----------------|
+| Constat de la faute | `DRAFT` → `OPENED` |
+| Demande d’explications | `POST …/explanations` → `EXPLANATION_REQUESTED` |
+| Entretien préalable | `POST …/hearings` (si `requiresHearing`) |
+| Notification de sanction | `POST …/applications` (`appealDeadlineAt` = +8 jours) |
+| Délais légaux de recours | champ `appealDeadlineAt` ; clôture = `POST …/closures` |
+
+Si `requiresHearing = false` (REPRIMAND, WARN) : après explications → `decisions` (pas d’entretien).
 
 **Routes** (POST dédiés + DTO, pattern ExitProcess)
 
 ```http
 POST /api/disciplinary_cases
 POST /api/disciplinary_cases/openings
+POST /api/disciplinary_cases/explanations
 POST /api/disciplinary_cases/hearings
 POST /api/disciplinary_cases/decisions
 POST /api/disciplinary_cases/applications
@@ -790,7 +801,7 @@ GET  /api/disciplinary_cases
 GET  /api/disciplinary_cases/{id}
 ```
 
-Rôles : `ROLE_DISCIPLINARY_CASE_CREATE|LIST|DETAILS|OPEN|SCHEDULE_HEARING|DECIDE|APPLY|CANCEL|REJECT|CLOSE`
+Rôles : `ROLE_DISCIPLINARY_CASE_CREATE|LIST|DETAILS|OPEN|REQUEST_EXPLANATION|SCHEDULE_HEARING|DECIDE|APPLY|CANCEL|REJECT|CLOSE`
 
 **Création**
 
@@ -800,18 +811,34 @@ Rôles : `ROLE_DISCIPLINARY_CASE_CREATE|LIST|DETAILS|OPEN|SCHEDULE_HEARING|DECID
   "sanctionScale": "SS…",
   "facts": "Faits reprochés…",
   "occurredAt": "2026-07-01T10:00:00+00:00",
-  "reason": null
+  "reason": null,
+  "acknowledgeRecidivism": false
 }
 ```
 
-**Transitions** (corps typique `{ "disciplinaryCaseId": "DS…" }` ; `hearings` ajoute `hearingAt` ; `decisions`/`rejections` peuvent ajouter `reason`)
+`acknowledgeRecidivism` : obligatoire à `true` pour rester au même palier qu’une sanction déjà appliquée (voir 6.17.3). L’escalade (gravité supérieure) ne le demande pas.
+
+**Demande d’explications**
+
+```json
+{
+  "disciplinaryCaseId": "DS…",
+  "explanationDueAt": "2026-08-26T10:00:00+00:00",
+  "explanationText": "Réponse de l’employé (optionnel)"
+}
+```
+
+`explanationDueAt` omis → +8 jours. Le même POST, déjà en `EXPLANATION_REQUESTED`, enregistre `explanationText` (réponse) sans changer le statut.
+
+**Transitions** (corps typique `{ "disciplinaryCaseId": "DS…" }` ; `hearings` ajoute `hearingAt` ; `decisions`/`rejections` peuvent ajouter `reason` ; `decisions` accepte aussi `acknowledgeRecidivism`)
 
 | Action | Depuis | Vers |
 |--------|--------|------|
 | openings | DRAFT | OPENED |
-| hearings | OPENED (si `requiresHearing`) | HEARING_SCHEDULED |
-| decisions | OPENED (sans hearing) ou HEARING_SCHEDULED | DECISION_PENDING |
-| applications | DECISION_PENDING | SANCTION_APPLIED |
+| explanations | OPENED | EXPLANATION_REQUESTED |
+| hearings | EXPLANATION_REQUESTED (si `requiresHearing`) | HEARING_SCHEDULED |
+| decisions | EXPLANATION_REQUESTED (sans hearing) ou HEARING_SCHEDULED | DECISION_PENDING |
+| applications | DECISION_PENDING | SANCTION_APPLIED (`appealDeadlineAt` +8 j) |
 | closures | SANCTION_APPLIED | CLOSED |
 | cancellations / rejections | avant application | CANCELLED / REJECTED |
 
@@ -820,7 +847,7 @@ Rôles : `ROLE_DISCIPLINARY_CASE_CREATE|LIST|DETAILS|OPEN|SCHEDULE_HEARING|DECID
 - Journey : `DISCIPLINARY_STARTED` à l’ouverture, `SANCTION_APPLIED` à l’application (stage `DISCIPLINARY`)
 - Si échelle `SUSPEND` → `EmployeeManager::suspendFrom` à l’application
 - Si échelle `DISMISS` → création **et démarrage** automatique d’un `ExitProcess` (`REASON_DISMISSAL`, `departureDate` = aujourd’hui, statut `IN_PROGRESS`) ; exposé dans `exitProcess`
-- Si échelle `WARN` ou `BLAME` → création d’un `Document` `TYPE_WARNING_LETTER` (métadonnée) ; fichier optionnel via `multipart/form-data` sur `applications` (champ `file`)
+- Si échelle `WARN` / `BLAME` / `REPRIMAND` → création d’un `Document` `TYPE_WARNING_LETTER` (métadonnée) ; fichier optionnel via `multipart/form-data` sur `applications` (champ `file`)
 - Création refusée si une affaire active existe déjà pour l’employé (statuts non terminaux)
 
 **Apply avec lettre (multipart)**
@@ -841,6 +868,22 @@ Sans fichier, JSON classique reste accepté :
 
 #### 6.17.3 Récidives et synthèse (Phase C)
 
+La récidive n’est pas un simple compteur : à la **création** et à la **décision**, l’API lit l’historique appliqué et **propose un palier plus élevé** ou **bloque**.
+
+Règle (gravité max déjà appliquée = `maxSeverityLevel`) :
+
+| Proposition | Comportement |
+|-------------|--------------|
+| Aucune sanction appliquée | Tout palier autorisé |
+| Gravité **>** max | Autorisé (escalade) — pas d’`acknowledgeRecidivism` |
+| Gravité **=** max | **400** sauf `acknowledgeRecidivism: true` (même palier assumé) |
+| Gravité **<** max | **400** toujours (pas de désescalade) |
+| Déjà au max (`DISMISS`) | Même palier uniquement avec `acknowledgeRecidivism: true` |
+
+Afficher le summary **avant** le formulaire de création / décision. Si `requiresAcknowledgement`, proposer `suggestedNextCode` et n’envoyer `acknowledgeRecidivism: true` que si l’utilisateur confirme explicitement le même palier.
+
+Le flag doit être renvoyé **à la création et à la décision** (la décision revalide la règle).
+
 ```http
 GET /api/employees/{employeeId}/disciplinary-summary
 ```
@@ -859,6 +902,11 @@ Réponse (`disciplinary_summary:get`) :
 | `lastAppliedAt` | datetime? | Date d’application de la dernière sanction |
 | `hasActiveCase` | bool | Affaire disciplinaire active en cours |
 | `isRepeatOffender` | bool | `appliedSanctionCount >= 1` |
+| `requiresAcknowledgement` | bool | Un même palier exigerait `acknowledgeRecidivism` |
+| `suggestedNextSeverity` | int? | Gravité du palier supérieur recommandé |
+| `suggestedNextCode` | string? | Code du palier supérieur (`null` si déjà au max) |
+| `suggestedNextLabel` | string? | Libellé du palier supérieur |
+| `reasons` | string[] | Messages de la règle (à afficher tels quels) |
 
 ---
 

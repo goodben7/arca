@@ -41,6 +41,16 @@ class DisciplinarySummaryResult
         public readonly bool $hasActiveCase,
         #[Groups(['disciplinary_summary:get'])]
         public readonly bool $isRepeatOffender,
+        #[Groups(['disciplinary_summary:get'])]
+        public readonly bool $requiresAcknowledgement,
+        #[Groups(['disciplinary_summary:get'])]
+        public readonly ?int $suggestedNextSeverity,
+        #[Groups(['disciplinary_summary:get'])]
+        public readonly ?string $suggestedNextCode,
+        #[Groups(['disciplinary_summary:get'])]
+        public readonly ?string $suggestedNextLabel,
+        #[Groups(['disciplinary_summary:get'])]
+        public readonly array $reasons = [],
     ) {
     }
 }

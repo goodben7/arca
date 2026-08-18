@@ -4,13 +4,13 @@ namespace App\Dto;
 
 use Symfony\Component\Validator\Constraints as Assert;
 
-class DecideDisciplinaryCaseDto
+class RequestDisciplinaryExplanationDto
 {
     #[Assert\NotBlank]
     #[Assert\Regex(pattern: '/^DS/')]
     public string $disciplinaryCaseId;
 
-    public ?string $reason = null;
+    public ?\DateTimeInterface $explanationDueAt = null;
 
-    public bool $acknowledgeRecidivism = false;
+    public ?string $explanationText = null;
 }

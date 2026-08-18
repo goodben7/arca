@@ -20,4 +20,18 @@ class SanctionScaleRepository extends ServiceEntityRepository
     {
         return $this->findOneBy(['code' => $code]);
     }
+
+    public function findNextActiveByMinSeverity(int $minSeverityExclusive): ?SanctionScale
+    {
+        return $this->createQueryBuilder('ss')
+            ->andWhere('ss.active = :active')
+            ->andWhere('ss.severityLevel > :minSeverity')
+            ->setParameter('active', true)
+            ->setParameter('minSeverity', $minSeverityExclusive)
+            ->orderBy('ss.severityLevel', 'ASC')
+            ->addOrderBy('ss.code', 'ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

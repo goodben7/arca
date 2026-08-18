@@ -261,6 +261,7 @@ return static function (): iterable {
     yield Permission::new('ROLE_DISCIPLINARY_CASE_LIST', "Consulter les affaires disciplinaires");
     yield Permission::new('ROLE_DISCIPLINARY_CASE_DETAILS', "Consulter le détail d'une affaire disciplinaire");
     yield Permission::new('ROLE_DISCIPLINARY_CASE_OPEN', "Ouvrir une affaire disciplinaire");
+    yield Permission::new('ROLE_DISCIPLINARY_CASE_REQUEST_EXPLANATION', "Demander des explications disciplinaires");
     yield Permission::new('ROLE_DISCIPLINARY_CASE_SCHEDULE_HEARING', "Planifier une audience disciplinaire");
     yield Permission::new('ROLE_DISCIPLINARY_CASE_DECIDE', "Décider d'une affaire disciplinaire");
     yield Permission::new('ROLE_DISCIPLINARY_CASE_APPLY', "Appliquer une sanction disciplinaire");

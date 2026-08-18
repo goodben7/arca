@@ -13,7 +13,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
     name: 'app:seed:sanction-scales',
-    description: 'Seed the default disciplinary sanction scale (WARN → DISMISS)',
+    description: 'Seed or update the default disciplinary sanction scale (REPRIMAND → DISMISS)',
 )]
 class SeedSanctionScalesCommand extends Command
 {
@@ -26,59 +26,80 @@ class SeedSanctionScalesCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        if (null !== $this->sanctionScales->findOneByCode(SanctionScaleConstants::CODE_WARN)) {
-            $output->writeln('Seed aborted: l\'échelle des sanctions est déjà présente.');
+        $created = 0;
+        $updated = 0;
 
-            return Command::FAILURE;
+        foreach ($this->specs() as $spec) {
+            $scale = $this->sanctionScales->findOneByCode($spec['code']);
+
+            if (null === $scale) {
+                $scale = (new SanctionScale())->setCode($spec['code']);
+                $this->em->persist($scale);
+                ++$created;
+            } else {
+                ++$updated;
+            }
+
+            $scale
+                ->setLabel($spec['label'])
+                ->setSeverityLevel($spec['severityLevel'])
+                ->setRequiresHearing($spec['requiresHearing'])
+                ->setMaxDurationDays($spec['maxDurationDays'])
+                ->setActive(true);
         }
 
-        $specs = [
+        $this->em->flush();
+
+        $output->writeln(sprintf(
+            'Sanction scales synced: %d created, %d updated.',
+            $created,
+            $updated,
+        ));
+
+        return Command::SUCCESS;
+    }
+
+    /**
+     * @return list<array{code: string, label: string, severityLevel: int, requiresHearing: bool, maxDurationDays: ?int}>
+     */
+    private function specs(): array
+    {
+        return [
+            [
+                'code' => SanctionScaleConstants::CODE_REPRIMAND,
+                'label' => 'Réprimande / Observation',
+                'severityLevel' => 1,
+                'requiresHearing' => false,
+                'maxDurationDays' => null,
+            ],
             [
                 'code' => SanctionScaleConstants::CODE_WARN,
                 'label' => 'Avertissement',
-                'severityLevel' => 1,
+                'severityLevel' => 2,
                 'requiresHearing' => false,
                 'maxDurationDays' => null,
             ],
             [
                 'code' => SanctionScaleConstants::CODE_BLAME,
                 'label' => 'Blâme',
-                'severityLevel' => 2,
+                'severityLevel' => 3,
                 'requiresHearing' => true,
                 'maxDurationDays' => null,
             ],
             [
                 'code' => SanctionScaleConstants::CODE_SUSPEND,
-                'label' => 'Mise à pied',
-                'severityLevel' => 3,
+                'label' => 'Mise à pied disciplinaire',
+                'severityLevel' => 4,
                 'requiresHearing' => true,
                 'maxDurationDays' => 8,
             ],
             [
                 'code' => SanctionScaleConstants::CODE_DISMISS,
-                'label' => 'Licenciement',
-                'severityLevel' => 4,
+                'label' => 'Licenciement pour faute',
+                'severityLevel' => 5,
                 'requiresHearing' => true,
                 'maxDurationDays' => null,
             ],
         ];
-
-        foreach ($specs as $spec) {
-            $scale = (new SanctionScale())
-                ->setCode($spec['code'])
-                ->setLabel($spec['label'])
-                ->setSeverityLevel($spec['severityLevel'])
-                ->setRequiresHearing($spec['requiresHearing'])
-                ->setMaxDurationDays($spec['maxDurationDays'])
-                ->setActive(true);
-
-            $this->em->persist($scale);
-        }
-
-        $this->em->flush();
-
-        $output->writeln(sprintf('Sanction scales seeded: %d levels.', count($specs)));
-
-        return Command::SUCCESS;
     }
 }
